@@ -39,7 +39,8 @@ public class OperationLogAspect {
         Integer code = 0;
         try {
             result = joinPoint.proceed();
-            if (result instanceof ApiResponse<?> apiResponse) {
+            if (result instanceof ApiResponse<?>) {
+                ApiResponse<?> apiResponse = (ApiResponse<?>) result;
                 code = apiResponse.getCode();
             }
             return result;
