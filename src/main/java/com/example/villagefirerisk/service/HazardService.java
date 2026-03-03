@@ -46,7 +46,7 @@ public class HazardService {
         hazard.setReportedBy(reporter);
         hazard.setDueAt(LocalDateTime.now().plusDays(7));
         Hazard saved = hazardRepository.save(hazard);
-        addRecord(saved, reporter, "REPORT", null, HazardStatus.REPORTED.name(), request.getDescription(), request.getImageUrl());
+        addRecord(saved, reporter, HazardActionType.REPORT, null, HazardStatus.REPORTED.name(), request.getDescription(), request.getImageUrl());
         return saved;
     }
 
@@ -63,7 +63,7 @@ public class HazardService {
         hazard.setAssignedAt(LocalDateTime.now());
         hazard.setStatus(HazardStatus.ASSIGNED);
         Hazard saved = hazardRepository.save(hazard);
-        addRecord(saved, admin, "ASSIGN", before, HazardStatus.ASSIGNED.name(), "管理员分派", null);
+        addRecord(saved, admin, HazardActionType.ASSIGN, before, HazardStatus.ASSIGNED.name(), "管理员分派", null);
         sendAssignNotification(grid, saved);
         return saved;
     }
@@ -78,7 +78,7 @@ public class HazardService {
             hazard.setResolvedAt(LocalDateTime.now());
         }
         Hazard saved = hazardRepository.save(hazard);
-        addRecord(saved, processor, "PROCESS", before, target.name(), request.getNote(), null);
+        addRecord(saved, processor, HazardActionType.PROCESS, before, target.name(), request.getNote(), null);
         return saved;
     }
 
@@ -86,7 +86,7 @@ public class HazardService {
         return hazardRepository.findAll();
     }
 
-    private void addRecord(Hazard hazard, User user, String action, String before, String after, String note, String attachmentUrl) {
+    private void addRecord(Hazard hazard, User user, HazardActionType action, String before, String after, String note, String attachmentUrl) {
         HazardProcessRecord record = new HazardProcessRecord();
         record.setHazard(hazard);
         record.setProcessor(user);
@@ -101,11 +101,11 @@ public class HazardService {
     private void sendAssignNotification(User grid, Hazard hazard) {
         NotificationLog log = new NotificationLog();
         log.setUser(grid);
-        log.setChannel("SMS");
+        log.setChannel(NotificationChannel.SMS);
         log.setTemplateCode("HAZARD_ASSIGN");
         log.setReceiver(grid.getPhone() == null ? grid.getUsername() : grid.getPhone());
         log.setContent("您有新的隐患待处理：#" + hazard.getId());
-        log.setStatus("SUCCESS");
+        log.setStatus(NotificationStatus.SUCCESS);
         log.setSentAt(LocalDateTime.now());
         log.setBizType("HAZARD_ASSIGN");
         log.setBizId(hazard.getId());

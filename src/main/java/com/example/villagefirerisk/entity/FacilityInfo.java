@@ -16,8 +16,9 @@ public class FacilityInfo extends BaseEntity {
     private String areaCode;
     @Column
     private String address;
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private FacilityStatus status;
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getFacilityName() { return facilityName; }
@@ -28,6 +29,6 @@ public class FacilityInfo extends BaseEntity {
     public void setAreaCode(String areaCode) { this.areaCode = areaCode; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public FacilityStatus getStatus() { return status; }
+    public void setStatus(FacilityStatus status) { this.status = status; }
 }
