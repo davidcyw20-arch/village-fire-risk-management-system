@@ -34,7 +34,7 @@ mysql -uroot -p < init.sql
 默认连接配置位于 `src/main/resources/application.yml`：
 - url: `jdbc:mysql://localhost:3306/village_fire_risk_db...`
 - username: `root`
-- password: `root`
+- password: `123456`
 
 如本地账号密码不同，请自行修改。
 
