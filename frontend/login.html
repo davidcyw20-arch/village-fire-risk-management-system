@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>登录 - 村镇消防风险管理系统</title>
+  <script src="./common.js"></script>
+  <style>body{font-family:Arial;max-width:480px;margin:40px auto}input,button,select{width:100%;padding:8px;margin:6px 0}</style>
+</head>
+<body>
+  <h2>系统登录</h2>
+  <form id="loginForm">
+    <input id="username" placeholder="用户名" required />
+    <input id="password" type="password" placeholder="密码" required />
+    <button type="submit">登录</button>
+  </form>
+  <h3>快速跳转</h3>
+  <select id="rolePage">
+    <option value="resident.html">居民页面</option>
+    <option value="grid.html">网格员页面</option>
+    <option value="admin.html">管理员页面</option>
+    <option value="map.html">地图页面</option>
+  </select>
+  <button onclick="location.href=document.getElementById('rolePage').value">进入页面</button>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  try {
+    const data = await apiFetch('/auth/login', {
+      method:'POST',
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+      })
+    });
+    setToken(data.token);
+    alert('登录成功，角色：' + data.role);
+    if (data.role === 'ADMIN') location.href = './admin.html';
+    else if (data.role === 'GRID') location.href = './grid.html';
+    else location.href = './resident.html';
+  } catch(err){ alert(err.message); }
+});
+</script>
+</body>
+</html>
