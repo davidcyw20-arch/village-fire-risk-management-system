@@ -9,6 +9,7 @@ import com.example.villagefirerisk.repository.UserRepository;
 import com.example.villagefirerisk.util.BusinessException;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,8 +38,8 @@ public class HazardService {
         hazard.setHazardType(request.getHazardType());
         hazard.setAreaCode(request.getAreaCode());
         hazard.setAddress(request.getAddress());
-        hazard.setLatitude(request.getLatitude());
-        hazard.setLongitude(request.getLongitude());
+        hazard.setLatitude(BigDecimal.valueOf(request.getLatitude()));
+        hazard.setLongitude(BigDecimal.valueOf(request.getLongitude()));
         hazard.setImageUrl(request.getImageUrl());
         hazard.setSeverity(request.getSeverity() == null ? RiskLevel.MID : request.getSeverity());
         hazard.setStatus(HazardStatus.REPORTED);
