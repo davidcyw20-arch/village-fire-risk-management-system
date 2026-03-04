@@ -38,7 +38,7 @@ public class AuthService {
         user.setFullName(request.getFullName());
         user.setPhone(request.getPhone());
         user.setAreaCode(request.getAreaCode());
-        user.setRole(request.getRole() == null ? Role.RESIDENT : request.getRole());
+        user.setRole(Role.RESIDENT);
         userRepository.save(user);
     }
 

@@ -113,6 +113,7 @@ python -m http.server 5500 --directory frontend
 
 访问：
 - 登录页：<http://localhost:5500/login.html>
+- 登录页支持**居民账号注册**（公开注册仅创建 RESIDENT）
 - 居民页：<http://localhost:5500/resident.html>
 - 网格员页：<http://localhost:5500/grid.html>
 - 管理员页：<http://localhost:5500/admin.html>
