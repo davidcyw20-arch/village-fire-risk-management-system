@@ -209,3 +209,15 @@ th{background:rgba(255,255,255,.08)}
   .login-shell { grid-template-columns: 1fr; margin-top: 26px; }
   .login-left-card h1, .login-right-card h2 { font-size: 30px; }
 }
+
+
+/* subtle variation to avoid 1:1 mimic */
+.login-shell.alt{grid-template-columns:1.1fr 1fr;gap:22px;margin-top:96px}
+.login-shell.alt .login-left-card{background:linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.50));}
+.login-shell.alt .login-right-card{background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.62));}
+.login-shell.alt .login-logo{border-radius:14px;box-shadow:0 8px 16px rgba(37,99,235,.28)}
+.login-shell.alt .login-left-card h1{font-size:36px;letter-spacing:.5px}
+.login-shell.alt .tip-box{background:rgba(255,255,255,.58);border-style:dashed}
+.login-shell.alt .tags span{background:#eef6ff;color:#1e3a8a}
+.login-shell.alt .login-right-card h2{font-size:34px}
+.login-shell.alt .login-btn{background:linear-gradient(90deg,#2f7de1,#3b82f6,#4f46e5)}
