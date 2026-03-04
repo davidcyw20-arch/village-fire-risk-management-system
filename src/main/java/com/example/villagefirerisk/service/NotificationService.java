@@ -1,6 +1,8 @@
 package com.example.villagefirerisk.service;
 
+import com.example.villagefirerisk.entity.NotificationChannel;
 import com.example.villagefirerisk.entity.NotificationLog;
+import com.example.villagefirerisk.entity.NotificationStatus;
 import com.example.villagefirerisk.entity.User;
 import com.example.villagefirerisk.repository.NotificationLogRepository;
 import com.example.villagefirerisk.repository.UserRepository;
@@ -25,11 +27,11 @@ public class NotificationService {
         User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException("用户不存在"));
         NotificationLog log = new NotificationLog();
         log.setUser(user);
-        log.setChannel("SMS");
+        log.setChannel(NotificationChannel.SMS);
         log.setTemplateCode("CUSTOM");
         log.setReceiver(user.getPhone() == null ? user.getUsername() : user.getPhone());
         log.setContent(content);
-        log.setStatus("SUCCESS");
+        log.setStatus(NotificationStatus.SUCCESS);
         log.setSentAt(LocalDateTime.now());
         log.setBizType("MANUAL");
         log.setBizId(userId);

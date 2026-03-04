@@ -13,8 +13,9 @@ public class HazardProcessRecord extends BaseEntity {
     @JoinColumn(name = "hazard_id", nullable = false)
     private Hazard hazard;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "action_type", nullable = false, length = 20)
-    private String actionType;
+    private HazardActionType actionType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "processor_id", nullable = false)
@@ -36,8 +37,8 @@ public class HazardProcessRecord extends BaseEntity {
     public void setId(Long id) { this.id = id; }
     public Hazard getHazard() { return hazard; }
     public void setHazard(Hazard hazard) { this.hazard = hazard; }
-    public String getActionType() { return actionType; }
-    public void setActionType(String actionType) { this.actionType = actionType; }
+    public HazardActionType getActionType() { return actionType; }
+    public void setActionType(HazardActionType actionType) { this.actionType = actionType; }
     public User getProcessor() { return processor; }
     public void setProcessor(User processor) { this.processor = processor; }
     public String getProcessNote() { return processNote; }
