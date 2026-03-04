@@ -1,73 +1,26 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <title>居民端</title>
-  <link rel="stylesheet" href="./styles.css" />
-  <script src="./common.js"></script>
-</head>
-<body>
-<div class="container">
-  <div class="panel">
-    <div class="toolbar" style="justify-content:space-between;">
-      <h2>居民端 · 隐患上报</h2>
-      <button class="danger" onclick="clearToken();location.href='./login.html'">退出登录</button>
-    </div>
-    <div class="grid">
-      <input id="title" placeholder="标题" />
-      <input id="hazardType" placeholder="类型，如 GAS_LEAK" />
-      <input id="areaCode" placeholder="区域编码，如 A001" />
-      <input id="address" placeholder="地址" />
-      <input id="latitude" placeholder="纬度" />
-      <input id="longitude" placeholder="经度" />
-      <input id="imageUrl" placeholder="图片URL（先调用上传接口）" style="grid-column:1/-1;" />
-      <select id="severity">
-        <option>LOW</option><option selected>MID</option><option>HIGH</option><option>CRITICAL</option>
-      </select>
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>居民端</title><link rel="stylesheet" href="./styles.css" /><script src="./common.js"></script></head>
+<body><div class="app">
+  <aside class="sidebar"><div class="brand">居民用户端</div><nav class="menu"><a class="active" href="#">隐患上报</a><a href="./map.html">风险地图</a><a href="./login.html">返回登录</a></nav></aside>
+  <main class="main">
+    <div class="topbar"><div><div class="title">居民工作台</div><div class="sub">上报隐患、查看处理进度、接收消防知识与预警</div></div><button class="danger" onclick="clearToken();location.href='./login.html'">退出</button></div>
+    <section class="cards"><div class="card"><h4>待处理隐患</h4><div id="m1" class="metric">-</div></div><div class="card"><h4>处理中</h4><div id="m2" class="metric">-</div></div><div class="card"><h4>已完成</h4><div id="m3" class="metric">-</div></div><div class="card"><h4>本页总数</h4><div id="m4" class="metric">-</div></div></section>
+    <section class="panel"><h3>消防隐患上报 <span class="badge">拍照/描述/定位</span></h3><div class="grid">
+      <input id="title" placeholder="标题" /><input id="hazardType" placeholder="类型，如 BLOCKED_EXIT" />
+      <input id="areaCode" placeholder="区域编码" /><input id="address" placeholder="地址" />
+      <input id="latitude" placeholder="纬度" /><input id="longitude" placeholder="经度" />
+      <input id="imageUrl" placeholder="图片URL（可先上传）" style="grid-column:1/-1" /><select id="severity"><option>LOW</option><option selected>MID</option><option>HIGH</option><option>CRITICAL</option></select>
       <button onclick="reportHazard()">提交上报</button>
-      <textarea id="description" placeholder="隐患描述" style="grid-column:1/-1;"></textarea>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h3>隐患列表 <span class="badge">分页展示</span></h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-    <div class="pagebar">
-      <button class="ghost" onclick="changePage(-1)">上一页</button>
-      <span id="pageInfo" class="muted"></span>
-      <button class="ghost" onclick="changePage(1)">下一页</button>
-    </div>
-  </div>
+      <textarea id="description" placeholder="隐患描述" style="grid-column:1/-1"></textarea>
+    </div></section>
+    <section class="panel"><h3>我的隐患进度</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th></tr></thead><tbody id="tbody"></tbody></table></div><div class="pagebar"><button class="ghost" onclick="changePage(-1)">上一页</button><span id="pageInfo"></span><button class="ghost" onclick="changePage(1)">下一页</button></div></section>
+  </main>
 </div>
 <script>
-let allData=[]; let page=1; const pageSize=5;
-async function reportHazard(){
-  try{
-    await apiFetch('/hazards', {method:'POST', body: JSON.stringify({
-      title: title.value, description: description.value, hazardType: hazardType.value,
-      areaCode: areaCode.value, address: address.value,
-      latitude: Number(latitude.value), longitude: Number(longitude.value),
-      imageUrl: imageUrl.value, severity: severity.value
-    })});
-    alert('上报成功');
-    loadHazards();
-  }catch(e){alert(e.message)}
-}
-async function loadHazards(){
-  try{allData = await apiFetch('/hazards'); render();}catch(e){alert(e.message)}
-}
-function render(){
-  const p = paginate(allData,page,pageSize); page = p.currentPage;
-  tbody.innerHTML = p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${x.hazardType}</td><td>${x.status}</td><td>${x.areaCode}</td></tr>`).join('');
-  pageInfo.textContent = `第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;
-}
-function changePage(delta){ page += delta; render(); }
+let allData=[];let page=1;const pageSize=5;
+async function reportHazard(){try{await apiFetch('/hazards',{method:'POST',body:JSON.stringify({title:title.value,description:description.value,hazardType:hazardType.value,areaCode:areaCode.value,address:address.value,latitude:Number(latitude.value),longitude:Number(longitude.value),imageUrl:imageUrl.value,severity:severity.value})});alert('上报成功');loadHazards();}catch(e){alert(e.message)}}
+async function loadHazards(){try{allData=await apiFetch('/hazards');render();metrics();}catch(e){alert(e.message)}}
+function metrics(){m1.textContent=allData.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED').length;m2.textContent=allData.filter(x=>x.status==='IN_PROGRESS').length;m3.textContent=allData.filter(x=>x.status==='RESOLVED').length;m4.textContent=allData.length;}
+function render(){const p=paginate(allData,page,pageSize);page=p.currentPage;tbody.innerHTML=p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${x.hazardType}</td><td>${x.status}</td><td>${x.areaCode}</td></tr>`).join('');pageInfo.textContent=`第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;}
+function changePage(d){page+=d;render();}
 loadHazards();
-</script>
-</body>
-</html>
+</script></body></html>

@@ -1,55 +1,27 @@
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <title>登录 - 村镇消防风险管理系统</title>
-  <link rel="stylesheet" href="./styles.css" />
-  <script src="./common.js"></script>
-</head>
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>登录</title><link rel="stylesheet" href="./styles.css" /><script src="./common.js"></script></head>
 <body>
-<div class="container" style="max-width:560px;">
-  <div class="panel">
-    <h2>🔥 村镇消防风险管理系统</h2>
-    <p class="muted">请输入账号密码登录系统。</p>
-    <form id="loginForm" class="grid-1">
-      <input id="username" placeholder="用户名" required />
-      <input id="password" type="password" placeholder="密码" required />
-      <button type="submit">登录</button>
-    </form>
-  </div>
-
-  <div class="panel">
-    <h3>快速跳转</h3>
-    <div class="toolbar">
-      <select id="rolePage" style="flex:1;min-width:180px;">
-        <option value="resident.html">居民页面</option>
-        <option value="grid.html">网格员页面</option>
-        <option value="admin.html">管理员页面</option>
-        <option value="map.html">地图页面</option>
-      </select>
-      <button class="ghost" onclick="location.href=document.getElementById('rolePage').value">进入页面</button>
+<div class="app" style="grid-template-columns:1fr;max-width:620px;margin:40px auto;min-height:auto;">
+  <div class="main">
+    <div class="topbar"><div><div class="title">🔥 城中村消防风险管理系统</div><div class="sub">毕业设计 · 纯网页端（三端）</div></div></div>
+    <div class="panel">
+      <h3>账号登录</h3>
+      <div class="grid" style="grid-template-columns:1fr;">
+        <input id="username" placeholder="用户名" />
+        <input id="password" type="password" placeholder="密码" />
+        <button onclick="login()">登录</button>
+      </div>
     </div>
+    <div class="panel"><h3>快速入口</h3><div class="toolbar"><button class="ghost" onclick="location.href='./resident.html'">居民端</button><button class="ghost" onclick="location.href='./grid.html'">网格员端</button><button class="ghost" onclick="location.href='./admin.html'">管理员端</button><button class="ghost" onclick="location.href='./map.html'">地图端</button></div></div>
   </div>
 </div>
-
 <script>
-document.getElementById('loginForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  try {
-    const data = await apiFetch('/auth/login', {
-      method:'POST',
-      body: JSON.stringify({
-        username: document.getElementById('username').value,
-        password: document.getElementById('password').value
-      })
-    });
-    setToken(data.token);
-    alert('登录成功，角色：' + data.role);
-    if (data.role === 'ADMIN') location.href = './admin.html';
-    else if (data.role === 'GRID') location.href = './grid.html';
-    else location.href = './resident.html';
-  } catch(err){ alert(err.message); }
-});
-</script>
-</body>
-</html>
+async function login(){
+  try{
+    const data=await apiFetch('/auth/login',{method:'POST',body:JSON.stringify({username:username.value,password:password.value})});
+    setToken(data.token); alert('登录成功：'+data.role);
+    if(data.role==='ADMIN') location.href='./admin.html';
+    else if(data.role==='GRID') location.href='./grid.html';
+    else location.href='./resident.html';
+  }catch(e){alert(e.message)}
+}
+</script></body></html>
