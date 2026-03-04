@@ -6,27 +6,54 @@
   <link rel="stylesheet" href="./styles.css" />
   <script src="./common.js"></script>
 </head>
-<body>
-  <div class="auth-wrap">
-    <div class="topbar">
-      <div>
-        <div class="title">🔥 城中村消防风险管理系统</div>
-        <div class="sub">请输入账号和密码登录</div>
-      </div>
-    </div>
+<body class="login-page">
+  <div class="login-shell">
+    <section class="login-left-card">
+      <div class="login-logo">VF</div>
+      <h1>城中村消防风险管理系统</h1>
+      <p class="desc">隐患上报 · 风险评估 · GIS展示 · 知识推荐</p>
+      <p class="desc">让消防治理更精准、更高效、更可追溯</p>
 
-    <div class="panel auth-card">
-      <h3>账号登录</h3>
-      <div class="grid" style="grid-template-columns:1fr;">
-        <input id="loginUsername" placeholder="用户名" />
-        <input id="loginPassword" type="password" placeholder="密码" />
-        <button onclick="login()">登录</button>
+      <div class="tip-box">
+        <h3>今日小提示</h3>
+        <p>突发事件处置要点：先保证自身安全，协助他人；遇到不确定风险，保持距离并及时报警上报。</p>
       </div>
-      <p class="auth-footer">还没有账号？<a class="link" href="./register.html">点击这里注册居民账号</a></p>
-    </div>
+
+      <div class="tags">
+        <span>前端：HTML + JS + Leaflet</span>
+        <span>后端：Spring Boot + JPA</span>
+      </div>
+    </section>
+
+    <section class="login-right-card">
+      <h2>登录</h2>
+      <p class="sub">使用你的账号进入系统</p>
+
+      <label>* 用户名</label>
+      <input id="loginUsername" placeholder="请输入用户名" value="admin" />
+
+      <label>* 密码</label>
+      <input id="loginPassword" type="password" placeholder="请输入密码" />
+
+      <div class="remember-row">
+        <label><input type="checkbox" checked /> 记住我</label>
+        <a class="link" href="#" onclick="fillDemo(event)">填充演示账号</a>
+      </div>
+
+      <button class="login-btn" onclick="login()">登录</button>
+
+      <p class="auth-footer">没有账号？<a class="link" href="./register.html">点击这里注册居民账号</a></p>
+      <p class="backend-tip">后端地址默认：<b>http://localhost:8080</b></p>
+    </section>
   </div>
 
 <script>
+function fillDemo(e){
+  e.preventDefault();
+  loginUsername.value='admin';
+  loginPassword.value='Password@123';
+}
+
 async function login(){
   try{
     const data=await apiFetch('/auth/login',{method:'POST',body:JSON.stringify({username:loginUsername.value,password:loginPassword.value})});
