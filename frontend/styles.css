@@ -94,33 +94,30 @@ th{background:rgba(255,255,255,.08)}
 .login-page {
   min-height: 100vh;
   margin: 0;
-  color: #111827;
+  color: #0f172a;
   background:
-    radial-gradient(800px 500px at 0% 0%, rgba(96,165,250,.55), transparent 65%),
-    radial-gradient(700px 450px at 95% 90%, rgba(52,211,153,.45), transparent 70%),
-    linear-gradient(165deg, #e5e7eb 0%, #e2e8f0 100%);
+    radial-gradient(900px 560px at 8% 0%, rgba(37,99,235,.18), transparent 64%),
+    radial-gradient(700px 420px at 95% 92%, rgba(14,165,233,.18), transparent 72%),
+    linear-gradient(165deg, #eef4ff 0%, #e2ebff 55%, #dde7fb 100%);
 }
 
 .login-shell {
-  max-width: 1120px;
-  margin: 98px auto;
+  max-width: 620px;
+  margin: 88px auto;
   padding: 0 14px;
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1fr;
   gap: 18px;
 }
 
-.login-left-card,
 .login-right-card {
-  background: rgba(255,255,255,.68);
-  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(148,163,184,.4);
   border-radius: 22px;
-  box-shadow: 0 20px 40px rgba(15,23,42,.10);
-  backdrop-filter: blur(8px);
-  padding: 26px;
+  box-shadow: 0 20px 45px rgba(30,41,59,.14);
+  backdrop-filter: blur(9px);
+  padding: 28px;
 }
-
-.eyebrow{margin:4px 0 8px;color:#64748b;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
 
 .login-logo {
   width: 56px;
@@ -135,40 +132,15 @@ th{background:rgba(255,255,255,.08)}
   margin-bottom: 10px;
 }
 
-.login-left-card h1 {
-  margin: 6px 0 10px;
-  color: #111827;
-  font-size: 40px;
-  line-height: 1.15;
-}
-
-.login-left-card .desc {
-  margin: 4px 0;
-  color: #4b5563;
-}
-
-.feature-list{margin-top:18px;display:grid;gap:10px}
-.feature-item{border:1px solid #dbe4f0;border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.6);color:#334155;font-size:14px}
-.feature-item span{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:700;margin-right:8px}
-
-.tags { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
-.tags span {
-  font-size: 12px;
-  border-radius: 8px;
-  padding: 5px 8px;
-  border: 1px solid #d1d5db;
-  background: #f8fafc;
-  color: #475569;
-}
-
-.login-right-card h2 { margin: 0 0 6px; font-size: 38px; color: #0f172a; }
-.login-right-card .sub { margin: 0 0 14px; color: #6b7280; }
+.login-right-card h2 { margin: 0 0 6px; font-size: 38px; color: #0f172a; letter-spacing:.3px }
+.login-right-card .sub { margin: 0 0 14px; color: #334155; }
 
 .login-right-card label {
   display: block;
   margin: 10px 0 6px;
-  color: #374151;
+  color: #1f2937;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .login-right-card input {
@@ -184,7 +156,7 @@ th{background:rgba(255,255,255,.08)}
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #64748b;
+  color: #334155;
   font-size: 14px;
 }
 
@@ -200,21 +172,19 @@ th{background:rgba(255,255,255,.08)}
 }
 
 .auth-footer { margin-top: 12px; color: #6b7280; font-size: 14px; }
-.backend-tip { margin-top: 8px; color: #64748b; font-size: 13px; }
+.login-extra{margin-top:12px;border:1px solid #dbe4f0;background:#f8fbff;border-radius:12px;padding:10px 12px;color:#1f2937}
+.login-extra p{margin:0 0 6px;font-size:13px;line-height:1.6}
+.login-extra ul{margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.6}
 
 @media (max-width: 980px) {
   .login-shell { grid-template-columns: 1fr; margin-top: 26px; }
-  .login-left-card h1, .login-right-card h2 { font-size: 30px; }
+  .login-right-card h2 { font-size: 30px; }
 }
 
 
 /* subtle variation to avoid 1:1 mimic */
-.login-shell.alt{grid-template-columns:1.1fr 1fr;gap:22px;margin-top:96px}
-.login-shell.alt .login-left-card{background:linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.50));}
+.login-shell.alt{max-width:640px;gap:22px;margin-top:96px}
 .login-shell.alt .login-right-card{background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.62));}
 .login-shell.alt .login-logo{border-radius:14px;box-shadow:0 8px 16px rgba(37,99,235,.28)}
-.login-shell.alt .login-left-card h1{font-size:36px;letter-spacing:.5px}
-.login-shell.alt .feature-item{background:rgba(255,255,255,.72);border-color:#d7e3f5}
-.login-shell.alt .tags span{background:#eef6ff;color:#1e3a8a}
 .login-shell.alt .login-right-card h2{font-size:34px}
 .login-shell.alt .login-btn{background:linear-gradient(90deg,#2f7de1,#3b82f6,#4f46e5)}

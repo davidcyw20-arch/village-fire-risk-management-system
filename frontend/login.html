@@ -8,27 +8,8 @@
 </head>
 <body class="login-page">
   <div class="login-shell alt">
-    <section class="login-left-card">
-      <div class="login-logo">FR</div>
-      <p class="eyebrow">Village Fire Risk Management</p>
-      <h1>消防风险协同治理平台</h1>
-      <p class="desc">隐患闭环 · 风险研判 · 地图联动 · 预警通知</p>
-      <p class="desc">让基层消防治理更智能、更敏捷、更透明</p>
-
-      <div class="feature-list">
-        <div class="feature-item"><span>01</span> 居民隐患上报与进度追踪</div>
-        <div class="feature-item"><span>02</span> 网格员任务闭环处理与巡查</div>
-        <div class="feature-item"><span>03</span> 管理端全局风险看板与审计</div>
-      </div>
-
-      <div class="tags">
-        <span>前端：HTML + JS + CSS</span>
-        <span>后端：Spring Boot + MySQL</span>
-        <span>架构：居民端 / 网格端 / 管理端</span>
-      </div>
-    </section>
-
     <section class="login-right-card">
+      <div class="login-logo">FR</div>
       <h2>账号登录</h2>
       <p class="sub">输入账号密码后按角色进入对应工作台</p>
 
@@ -45,8 +26,15 @@
 
       <button class="login-btn" onclick="login()">登录</button>
 
+      <div class="login-extra">
+        <p><b>登录说明</b>：系统会根据账号角色自动进入居民端、网格端或管理员端。</p>
+        <ul>
+          <li>居民账号可自行注册</li>
+          <li>网格员/管理员账号由系统管理员分配</li>
+        </ul>
+      </div>
+
       <p class="auth-footer">没有账号？<a class="link" href="./register.html">点击这里注册居民账号</a></p>
-      <p class="backend-tip">后端地址默认：<b>http://localhost:8080</b></p>
     </section>
   </div>
 
