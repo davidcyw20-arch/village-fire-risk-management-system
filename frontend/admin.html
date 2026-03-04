@@ -3,27 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <title>管理员端</title>
+  <link rel="stylesheet" href="./styles.css" />
   <script src="./common.js"></script>
-  <style>body{font-family:Arial;margin:20px}input,button{margin:4px;padding:6px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px}</style>
 </head>
 <body>
-<h2>管理员端 - 分派与风险查看</h2>
-<button onclick="clearToken();location.href='./login.html'">退出登录</button>
-<div>
-  <input id="hazardId" placeholder="隐患ID" />
-  <input id="gridUserId" placeholder="网格员用户ID" />
-  <button onclick="assignHazard()">执行分派</button>
-  <button onclick="loadRisk()">刷新风险区域</button>
-  <button onclick="exportExcel()">导出Excel报表</button>
+<div class="container">
+  <div class="panel">
+    <div class="toolbar" style="justify-content:space-between;">
+      <h2>管理员端 · 分派与风险查看</h2>
+      <button class="danger" onclick="clearToken();location.href='./login.html'">退出登录</button>
+    </div>
+    <div class="toolbar">
+      <input id="hazardId" placeholder="隐患ID" />
+      <input id="gridUserId" placeholder="网格员用户ID" />
+      <button onclick="assignHazard()">执行分派</button>
+      <button class="ghost" onclick="loadRisk()">刷新风险区域</button>
+      <button class="ghost" onclick="exportExcel()">导出Excel报表</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>隐患列表</h3>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>标题</th><th>状态</th><th>区域</th><th>assigned_to</th></tr></thead><tbody id="tbodyHazards"></tbody></table></div>
+    <div class="pagebar"><button class="ghost" onclick="changePage(-1)">上一页</button><span id="pageInfo" class="muted"></span><button class="ghost" onclick="changePage(1)">下一页</button></div>
+  </div>
+
+  <div class="panel">
+    <h3>区域风险</h3>
+    <div class="table-wrap"><table><thead><tr><th>area_code</th><th>risk_score</th><th>risk_level</th></tr></thead><tbody id="tbodyRisk"></tbody></table></div>
+  </div>
 </div>
-
-<h3>隐患列表</h3>
-<table><thead><tr><th>ID</th><th>标题</th><th>状态</th><th>区域</th><th>assigned_to</th></tr></thead><tbody id="tbodyHazards"></tbody></table>
-<div><button onclick="changePage(-1)">上一页</button><span id="pageInfo"></span><button onclick="changePage(1)">下一页</button></div>
-
-<h3>区域风险</h3>
-<table><thead><tr><th>area_code</th><th>risk_score</th><th>risk_level</th></tr></thead><tbody id="tbodyRisk"></tbody></table>
-
 <script>
 let allHazards=[];let page=1;const pageSize=5;
 async function assignHazard(){

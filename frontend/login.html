@@ -3,24 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <title>登录 - 村镇消防风险管理系统</title>
+  <link rel="stylesheet" href="./styles.css" />
   <script src="./common.js"></script>
-  <style>body{font-family:Arial;max-width:480px;margin:40px auto}input,button,select{width:100%;padding:8px;margin:6px 0}</style>
 </head>
 <body>
-  <h2>系统登录</h2>
-  <form id="loginForm">
-    <input id="username" placeholder="用户名" required />
-    <input id="password" type="password" placeholder="密码" required />
-    <button type="submit">登录</button>
-  </form>
-  <h3>快速跳转</h3>
-  <select id="rolePage">
-    <option value="resident.html">居民页面</option>
-    <option value="grid.html">网格员页面</option>
-    <option value="admin.html">管理员页面</option>
-    <option value="map.html">地图页面</option>
-  </select>
-  <button onclick="location.href=document.getElementById('rolePage').value">进入页面</button>
+<div class="container" style="max-width:560px;">
+  <div class="panel">
+    <h2>🔥 村镇消防风险管理系统</h2>
+    <p class="muted">请输入账号密码登录系统。</p>
+    <form id="loginForm" class="grid-1">
+      <input id="username" placeholder="用户名" required />
+      <input id="password" type="password" placeholder="密码" required />
+      <button type="submit">登录</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h3>快速跳转</h3>
+    <div class="toolbar">
+      <select id="rolePage" style="flex:1;min-width:180px;">
+        <option value="resident.html">居民页面</option>
+        <option value="grid.html">网格员页面</option>
+        <option value="admin.html">管理员页面</option>
+        <option value="map.html">地图页面</option>
+      </select>
+      <button class="ghost" onclick="location.href=document.getElementById('rolePage').value">进入页面</button>
+    </div>
+  </div>
+</div>
 
 <script>
 document.getElementById('loginForm').addEventListener('submit', async (e)=>{

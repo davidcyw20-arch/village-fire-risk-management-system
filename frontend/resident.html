@@ -3,38 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <title>居民端</title>
+  <link rel="stylesheet" href="./styles.css" />
   <script src="./common.js"></script>
-  <style>body{font-family:Arial;margin:20px}input,textarea,button,select{margin:4px;padding:6px}.card{border:1px solid #ddd;padding:12px;margin:8px 0}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px}</style>
 </head>
 <body>
-<h2>居民端 - 隐患上报</h2>
-<button onclick="clearToken();location.href='./login.html'">退出登录</button>
-<div class="card">
-  <input id="title" placeholder="标题" />
-  <textarea id="description" placeholder="描述"></textarea>
-  <input id="hazardType" placeholder="类型，如 GAS_LEAK" />
-  <input id="areaCode" placeholder="区域编码，如 A001" />
-  <input id="address" placeholder="地址" />
-  <input id="latitude" placeholder="纬度" />
-  <input id="longitude" placeholder="经度" />
-  <input id="imageUrl" placeholder="图片URL（可先在文件上传页上传）" />
-  <select id="severity">
-    <option>LOW</option><option selected>MID</option><option>HIGH</option><option>CRITICAL</option>
-  </select>
-  <button onclick="reportHazard()">提交上报</button>
-</div>
+<div class="container">
+  <div class="panel">
+    <div class="toolbar" style="justify-content:space-between;">
+      <h2>居民端 · 隐患上报</h2>
+      <button class="danger" onclick="clearToken();location.href='./login.html'">退出登录</button>
+    </div>
+    <div class="grid">
+      <input id="title" placeholder="标题" />
+      <input id="hazardType" placeholder="类型，如 GAS_LEAK" />
+      <input id="areaCode" placeholder="区域编码，如 A001" />
+      <input id="address" placeholder="地址" />
+      <input id="latitude" placeholder="纬度" />
+      <input id="longitude" placeholder="经度" />
+      <input id="imageUrl" placeholder="图片URL（先调用上传接口）" style="grid-column:1/-1;" />
+      <select id="severity">
+        <option>LOW</option><option selected>MID</option><option>HIGH</option><option>CRITICAL</option>
+      </select>
+      <button onclick="reportHazard()">提交上报</button>
+      <textarea id="description" placeholder="隐患描述" style="grid-column:1/-1;"></textarea>
+    </div>
+  </div>
 
-<h3>我的可见隐患列表</h3>
-<table>
-  <thead><tr><th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th></tr></thead>
-  <tbody id="tbody"></tbody>
-</table>
-<div>
-  <button onclick="changePage(-1)">上一页</button>
-  <span id="pageInfo"></span>
-  <button onclick="changePage(1)">下一页</button>
+  <div class="panel">
+    <h3>隐患列表 <span class="badge">分页展示</span></h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagebar">
+      <button class="ghost" onclick="changePage(-1)">上一页</button>
+      <span id="pageInfo" class="muted"></span>
+      <button class="ghost" onclick="changePage(1)">下一页</button>
+    </div>
+  </div>
 </div>
-
 <script>
 let allData=[]; let page=1; const pageSize=5;
 async function reportHazard(){

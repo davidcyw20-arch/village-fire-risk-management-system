@@ -1,0 +1,79 @@
+:root {
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --border: #e5e7eb;
+  --danger: #dc2626;
+  --shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 220px);
+}
+
+.container {
+  max-width: 1080px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+h2, h3 { margin: 8px 0 14px; }
+.muted { color: var(--muted); }
+
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.grid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-1 { display: grid; gap: 10px; grid-template-columns: 1fr; }
+
+input, textarea, select, button {
+  font: inherit;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 9px 11px;
+  background: #fff;
+}
+textarea { min-height: 96px; resize: vertical; }
+button {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  cursor: pointer;
+}
+button:hover { background: var(--primary-dark); }
+button.ghost {
+  color: var(--text);
+  background: #fff;
+  border-color: var(--border);
+}
+button.ghost:hover { background: #f9fafb; }
+button.danger { background: var(--danger); border-color: var(--danger); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { border-bottom: 1px solid var(--border); padding: 10px; text-align: left; }
+th { background: #f8fafc; font-weight: 600; }
+
+.badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 12px; background: #eef2ff; color: #3730a3; }
+
+.pagebar { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+
+#map { height: 82vh; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+@media (max-width: 860px) {
+  .grid { grid-template-columns: 1fr; }
+}

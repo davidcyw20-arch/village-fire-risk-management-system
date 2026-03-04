@@ -2,6 +2,12 @@
 
 企业级村镇消防风险管理系统（纯 Web），包含 Spring Boot 3.x 后端 + 原生 HTML/JS 前端。
 
+## 0. 第一阶段功能落地清单
+
+- 详见：`PHASE1_CHECKLIST.md`
+
+---
+
 ## 1. 环境要求
 
 - JDK 17

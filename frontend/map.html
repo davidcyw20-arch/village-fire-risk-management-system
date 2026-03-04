@@ -3,21 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <title>GIS 地图</title>
+  <link rel="stylesheet" href="./styles.css" />
   <script src="./common.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <style>body{font-family:Arial;margin:0}#map{height:88vh}#top{padding:10px}</style>
 </head>
 <body>
-<div id="top">
-  <button onclick="clearToken();location.href='./login.html'">退出登录</button>
-  <span>点击地图可获取经纬度：</span>
-  <input id="lat" placeholder="lat" readonly />
-  <input id="lng" placeholder="lng" readonly />
-  <button onclick="loadHazards()">刷新隐患点</button>
+<div class="container">
+  <div class="panel">
+    <div class="toolbar" style="justify-content:space-between;">
+      <h2>GIS 地图 · 隐患点位</h2>
+      <button class="danger" onclick="clearToken();location.href='./login.html'">退出登录</button>
+    </div>
+    <div class="toolbar">
+      <span class="muted">点击地图可获取经纬度：</span>
+      <input id="lat" placeholder="lat" readonly />
+      <input id="lng" placeholder="lng" readonly />
+      <button class="ghost" onclick="loadHazards()">刷新隐患点</button>
+    </div>
+    <div id="map"></div>
+  </div>
 </div>
-<div id="map"></div>
-
 <script>
 const map = L.map('map').setView([31.2304, 121.4737], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
@@ -35,7 +41,7 @@ async function loadHazards(){
     markerGroup.clearLayers();
     hazards.forEach(h=>{
       if(h.latitude && h.longitude){
-        L.marker([h.latitude, h.longitude]).addTo(markerGroup)
+        L.marker([Number(h.latitude), Number(h.longitude)]).addTo(markerGroup)
           .bindPopup(`<b>${h.title}</b><br/>类型:${h.hazardType}<br/>状态:${h.status}<br/>地址:${h.address}`);
       }
     });
