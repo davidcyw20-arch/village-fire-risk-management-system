@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>注册居民账号</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./common.js"></script>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="topbar">
+      <div>
+        <div class="title">📝 居民账号注册</div>
+        <div class="sub">公开注册仅创建居民端账号（RESIDENT）</div>
+      </div>
+    </div>
+
+    <div class="panel auth-card">
+      <div class="grid" style="grid-template-columns:1fr;">
+        <input id="regUsername" placeholder="用户名" />
+        <input id="regPassword" type="password" placeholder="密码" />
+        <input id="regFullName" placeholder="姓名" />
+        <input id="regPhone" placeholder="手机号" />
+        <input id="regAreaCode" placeholder="区域编码（如 A001）" />
+        <button onclick="registerResident()">注册居民账号</button>
+        <button class="ghost" onclick="location.href='./login.html'">返回登录</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+async function registerResident(){
+  try{
+    await apiFetch('/auth/register',{method:'POST',body:JSON.stringify({
+      username: regUsername.value,
+      password: regPassword.value,
+      fullName: regFullName.value,
+      phone: regPhone.value,
+      areaCode: regAreaCode.value,
+      role: 'RESIDENT'
+    })});
+    alert('注册成功，请返回登录');
+    location.href='./login.html';
+  }catch(e){alert(e.message)}
+}
+</script>
+</body>
+</html>

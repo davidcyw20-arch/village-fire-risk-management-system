@@ -1,40 +1,31 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>登录</title><link rel="stylesheet" href="./styles.css" /><script src="./common.js"></script></head>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>登录</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./common.js"></script>
+</head>
 <body>
-<div class="app" style="grid-template-columns:1fr;max-width:860px;margin:40px auto;min-height:auto;">
-  <div class="main">
+  <div class="auth-wrap">
     <div class="topbar">
       <div>
         <div class="title">🔥 城中村消防风险管理系统</div>
-        <div class="sub">默认从登录页进入，按账号角色自动进入对应端口页面</div>
+        <div class="sub">请输入账号和密码登录</div>
       </div>
     </div>
 
-    <div class="grid" style="grid-template-columns:1fr 1fr;">
-      <div class="panel">
-        <h3>账号登录</h3>
-        <p class="sub">管理员 / 网格员 / 居民都在此登录。</p>
-        <div class="grid" style="grid-template-columns:1fr;">
-          <input id="loginUsername" placeholder="用户名" />
-          <input id="loginPassword" type="password" placeholder="密码" />
-          <button onclick="login()">登录</button>
-        </div>
+    <div class="panel auth-card">
+      <h3>账号登录</h3>
+      <div class="grid" style="grid-template-columns:1fr;">
+        <input id="loginUsername" placeholder="用户名" />
+        <input id="loginPassword" type="password" placeholder="密码" />
+        <button onclick="login()">登录</button>
       </div>
-
-      <div class="panel">
-        <h3>居民账号注册</h3>
-        <p class="sub">仅支持注册居民用户端账号（RESIDENT）。</p>
-        <div class="grid" style="grid-template-columns:1fr;">
-          <input id="regUsername" placeholder="用户名" />
-          <input id="regPassword" type="password" placeholder="密码" />
-          <input id="regFullName" placeholder="姓名" />
-          <input id="regPhone" placeholder="手机号" />
-          <input id="regAreaCode" placeholder="区域编码（如 A001）" />
-          <button class="ghost" onclick="registerResident()">注册居民账号</button>
-        </div>
-      </div>
+      <p class="auth-footer">还没有账号？<a class="link" href="./register.html">点击这里注册居民账号</a></p>
     </div>
   </div>
-</div>
+
 <script>
 async function login(){
   try{
@@ -45,19 +36,6 @@ async function login(){
     else location.href='./resident.html';
   }catch(e){alert(e.message)}
 }
-
-async function registerResident(){
-  try{
-    await apiFetch('/auth/register',{method:'POST',body:JSON.stringify({
-      username: regUsername.value,
-      password: regPassword.value,
-      fullName: regFullName.value,
-      phone: regPhone.value,
-      areaCode: regAreaCode.value,
-      role: 'RESIDENT'
-    })});
-    alert('注册成功，请使用新账号登录');
-    regUsername.value='';regPassword.value='';regFullName.value='';regPhone.value='';regAreaCode.value='';
-  }catch(e){alert(e.message)}
-}
-</script></body></html>
+</script>
+</body>
+</html>
