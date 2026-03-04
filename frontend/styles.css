@@ -111,12 +111,12 @@ th{background:rgba(255,255,255,.08)}
 }
 
 .login-right-card {
-  background: rgba(255,255,255,.86);
-  border: 1px solid rgba(148,163,184,.4);
-  border-radius: 22px;
-  box-shadow: 0 24px 48px rgba(30,41,59,.16);
-  backdrop-filter: blur(9px);
-  padding: 28px;
+  background: rgba(255,255,255,.9);
+  border: 1px solid rgba(148,163,184,.45);
+  border-radius: 24px;
+  box-shadow: 0 28px 56px rgba(30,41,59,.18);
+  backdrop-filter: blur(10px);
+  padding: 30px;
   position: relative;
   overflow: hidden;
 }
@@ -150,9 +150,7 @@ th{background:rgba(255,255,255,.08)}
 .login-intro .intro-en{margin:0;color:#2563eb;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
 .login-intro h1{margin:6px 0 8px;font-size:28px;color:#0b1b43;line-height:1.25;letter-spacing:.3px}
 .login-intro p{margin:3px 0;color:#334155;font-size:14px;line-height:1.55}
-
-.login-right-card h2 { margin: 2px 0 6px; font-size: 32px; color: #0f172a; letter-spacing:.3px }
-.login-right-card .sub { margin: 0 0 14px; color: #334155; }
+.form-caption{margin:2px 0 14px;color:#1e3a8a;font-size:14px;font-weight:700;background:linear-gradient(90deg,#eff6ff,#eef2ff);border:1px solid #dbeafe;border-radius:10px;padding:7px 10px;display:inline-block}
 
 .login-right-card label {
   display: block;
@@ -164,9 +162,9 @@ th{background:rgba(255,255,255,.08)}
 
 .login-right-card input {
   width: 100%;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #111827;
+  border: 1px solid #c5d2e6;
+  background: #ffffff;
+  color: #0f172a;
 }
 .login-right-card input:focus{outline:none;border-color:#60a5fa;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
 
@@ -181,14 +179,16 @@ th{background:rgba(255,255,255,.08)}
 
 .login-btn {
   width: 100%;
-  margin-top: 2px;
+  margin-top: 4px;
   border-radius: 12px;
-  padding: 11px 0;
+  padding: 12px 0;
   background: linear-gradient(95deg, #3b82f6, #2563eb 45%, #4f46e5);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 10px 18px rgba(37,99,235,.28);
+  letter-spacing:.06em;
+  box-shadow: 0 12px 20px rgba(37,99,235,.30);
 }
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 16px 24px rgba(37,99,235,.34)}
 
 .auth-footer { margin-top: 12px; color: #6b7280; font-size: 14px; }
 .auth-footer .link{color:#1d4ed8;font-weight:700;text-decoration:underline;text-underline-offset:2px}
@@ -199,7 +199,6 @@ th{background:rgba(255,255,255,.08)}
 
 @media (max-width: 980px) {
   .login-shell { grid-template-columns: 1fr; margin-top: 26px; }
-  .login-right-card h2 { font-size: 30px; }
 }
 
 
@@ -207,5 +206,4 @@ th{background:rgba(255,255,255,.08)}
 .login-shell.alt{max-width:640px;gap:22px;margin-top:96px}
 .login-shell.alt .login-right-card{background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.62));}
 .login-shell.alt .login-logo{border-radius:14px;box-shadow:0 8px 16px rgba(37,99,235,.28)}
-.login-shell.alt .login-right-card h2{font-size:32px}
 .login-shell.alt .login-btn{background:linear-gradient(90deg,#2f7de1,#3b82f6,#4f46e5)}
