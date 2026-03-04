@@ -96,9 +96,9 @@ th{background:rgba(255,255,255,.08)}
   margin: 0;
   color: #0f172a;
   background:
-    radial-gradient(900px 560px at 8% 0%, rgba(37,99,235,.18), transparent 64%),
-    radial-gradient(700px 420px at 95% 92%, rgba(14,165,233,.18), transparent 72%),
-    linear-gradient(165deg, #eef4ff 0%, #e2ebff 55%, #dde7fb 100%);
+    radial-gradient(980px 560px at 10% -6%, rgba(37,99,235,.22), transparent 65%),
+    radial-gradient(800px 460px at 100% 100%, rgba(20,184,166,.20), transparent 72%),
+    linear-gradient(160deg, #edf3ff 0%, #e5edff 52%, #dde7fb 100%);
 }
 
 .login-shell {
@@ -114,9 +114,23 @@ th{background:rgba(255,255,255,.08)}
   background: rgba(255,255,255,.86);
   border: 1px solid rgba(148,163,184,.4);
   border-radius: 22px;
-  box-shadow: 0 20px 45px rgba(30,41,59,.14);
+  box-shadow: 0 24px 48px rgba(30,41,59,.16);
   backdrop-filter: blur(9px);
   padding: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-right-card::before{
+  content:"";
+  position:absolute;
+  top:-60px;
+  right:-80px;
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(59,130,246,.16) 0%, rgba(59,130,246,0) 68%);
+  pointer-events:none;
 }
 
 .login-logo {
@@ -132,7 +146,12 @@ th{background:rgba(255,255,255,.08)}
   margin-bottom: 10px;
 }
 
-.login-right-card h2 { margin: 0 0 6px; font-size: 38px; color: #0f172a; letter-spacing:.3px }
+.login-intro{margin:2px 0 16px;position:relative;z-index:1}
+.login-intro .intro-en{margin:0;color:#2563eb;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.login-intro h1{margin:6px 0 8px;font-size:28px;color:#0b1b43;line-height:1.25;letter-spacing:.3px}
+.login-intro p{margin:3px 0;color:#334155;font-size:14px;line-height:1.55}
+
+.login-right-card h2 { margin: 2px 0 6px; font-size: 32px; color: #0f172a; letter-spacing:.3px }
 .login-right-card .sub { margin: 0 0 14px; color: #334155; }
 
 .login-right-card label {
@@ -172,6 +191,8 @@ th{background:rgba(255,255,255,.08)}
 }
 
 .auth-footer { margin-top: 12px; color: #6b7280; font-size: 14px; }
+.auth-footer .link{color:#1d4ed8;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.auth-footer .link:hover{color:#1e40af}
 .login-extra{margin-top:12px;border:1px solid #dbe4f0;background:#f8fbff;border-radius:12px;padding:10px 12px;color:#1f2937}
 .login-extra p{margin:0 0 6px;font-size:13px;line-height:1.6}
 .login-extra ul{margin:0;padding-left:18px;color:#334155;font-size:13px;line-height:1.6}
@@ -186,5 +207,5 @@ th{background:rgba(255,255,255,.08)}
 .login-shell.alt{max-width:640px;gap:22px;margin-top:96px}
 .login-shell.alt .login-right-card{background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.62));}
 .login-shell.alt .login-logo{border-radius:14px;box-shadow:0 8px 16px rgba(37,99,235,.28)}
-.login-shell.alt .login-right-card h2{font-size:34px}
+.login-shell.alt .login-right-card h2{font-size:32px}
 .login-shell.alt .login-btn{background:linear-gradient(90deg,#2f7de1,#3b82f6,#4f46e5)}
