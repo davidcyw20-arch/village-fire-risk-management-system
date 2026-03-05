@@ -8,6 +8,8 @@ import java.util.List;
 public interface DataDictionaryItemRepository extends JpaRepository<DataDictionaryItem, Long> {
     List<DataDictionaryItem> findByOrderByIdDesc();
 
+    List<DataDictionaryItem> findByEnabledTrueOrderByIdDesc();
+
     List<DataDictionaryItem> findByEnabledTrueAndDictTypeIgnoreCaseOrderByIdDesc(String dictType);
 
     List<DataDictionaryItem> findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc(String dictType);

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -43,14 +44,37 @@ public class DictionaryController {
         }
 
         if ("隐患类型".equals(normalizedType)) {
-            List<DataDictionaryItem> fallback = new ArrayList<>();
-            fallback.addAll(dataDictionaryItemRepository.findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc("隐患"));
-            fallback.addAll(dataDictionaryItemRepository.findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc("类型"));
-            fallback.addAll(dataDictionaryItemRepository.findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc("hazard"));
-            return ApiResponse.success(distinctByTypeValue(fallback));
+            return ApiResponse.success(listHazardTypeItems());
         }
 
         return ApiResponse.success(List.of());
+    }
+
+    @GetMapping("/hazard-types")
+    @PreAuthorize("hasAnyRole('RESIDENT','GRID','ADMIN')")
+    public ApiResponse<List<DataDictionaryItem>> listHazardTypes() {
+        return ApiResponse.success(listHazardTypeItems());
+    }
+
+    private List<DataDictionaryItem> listHazardTypeItems() {
+        List<DataDictionaryItem> enabled = dataDictionaryItemRepository.findByEnabledTrueOrderByIdDesc();
+        List<DataDictionaryItem> matched = enabled.stream()
+                .filter(x -> matchesHazardTypeKey(x.getDictType()))
+                .toList();
+
+        if (!matched.isEmpty()) {
+            return distinctByTypeValue(matched);
+        }
+
+        return distinctByTypeValue(enabled);
+    }
+
+    private boolean matchesHazardTypeKey(String dictType) {
+        if (dictType == null) {
+            return false;
+        }
+        String t = dictType.trim().toLowerCase(Locale.ROOT);
+        return t.contains("隐患") || t.contains("类型") || t.contains("hazard");
     }
 
     private List<DataDictionaryItem> distinctByTypeValue(List<DataDictionaryItem> items) {

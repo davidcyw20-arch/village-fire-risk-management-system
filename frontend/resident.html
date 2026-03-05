@@ -175,7 +175,7 @@ function buildDefaultHazardTypeSuggestions(){
 async function loadHazardTypeSuggestions(){
   let items = [];
   try{
-    items = await apiFetch('/dictionaries/items?dictType=' + encodeURIComponent('隐患类型') + '&ts=' + Date.now());
+    items = await apiFetch('/dictionaries/hazard-types?ts=' + Date.now());
   }catch(e){
     items = [];
   }
@@ -290,6 +290,8 @@ function fillCurrentLocation(){
 
 loadProfile();
 loadHazardTypeSuggestions();
+
+hazardType.addEventListener('focus', loadHazardTypeSuggestions);
 loadHazards();
 </script>
 </body>
