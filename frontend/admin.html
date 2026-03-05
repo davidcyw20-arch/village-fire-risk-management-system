@@ -198,11 +198,7 @@ let page = 1;
 const pageSize = 6;
 let knowledgeData = [];
 
-const LS_SYS_CONFIG = 'admin_sys_config';
-const LS_DICT = 'admin_data_dict';
-const LS_PUSH_RULES = 'admin_push_rules';
-const LS_AUDIT = 'admin_audit_logs';
-const LS_MODEL = 'admin_risk_model';
+let auditLogs = [];
 
 function ensureAdminRole(){
   if(me.role !== 'ADMIN'){
@@ -211,58 +207,67 @@ function ensureAdminRole(){
   }
 }
 
-function readArr(k){ return JSON.parse(localStorage.getItem(k) || '[]'); }
-function writeArr(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
-function readObj(k, d={}){ return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
-
 function addAudit(module, operation, detail){
-  const logs = readArr(LS_AUDIT);
-  logs.unshift({time: new Date().toISOString().replace('T',' ').slice(0,19), module, operation, detail});
-  writeArr(LS_AUDIT, logs.slice(0, 500));
+  console.log(`[AUDIT] ${module} | ${operation} | ${detail}`);
 }
 
-function saveSystemConfig(){
-  const cfg = {
-    apiBase: cfgApiBase.value.trim(),
-    defaultArea: cfgDefaultArea.value.trim().toUpperCase(),
-    rolePolicy: cfgRolePolicy.value
-  };
-  localStorage.setItem('apiBase', cfg.apiBase || localStorage.getItem('apiBase') || API_BASE);
-  localStorage.setItem('adminDefaultArea', cfg.defaultArea || 'A001');
-  writeArr(LS_SYS_CONFIG, [cfg]);
-  addAudit('系统配置', '保存配置', `默认辖区=${cfg.defaultArea || 'A001'}；策略=${cfg.rolePolicy}`);
-  alert('系统配置已保存（刷新页面后生效）');
-  renderAuditLogs();
+async function saveSystemConfig(){
+  try{
+    const cfg = await apiFetch('/admin/system-config', {
+      method:'PUT',
+      body: JSON.stringify({
+        apiBase: cfgApiBase.value.trim(),
+        defaultArea: cfgDefaultArea.value.trim().toUpperCase(),
+        rolePolicy: cfgRolePolicy.value
+      })
+    });
+    cfgApiBase.value = cfg.apiBase || '';
+    cfgDefaultArea.value = cfg.defaultArea || 'A001';
+    cfgRolePolicy.value = cfg.rolePolicy || 'STRICT';
+    alert('系统配置已保存');
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
 }
 
-function loadSystemConfig(){
-  const cfg = readArr(LS_SYS_CONFIG)[0] || {};
-  cfgApiBase.value = cfg.apiBase || localStorage.getItem('apiBase') || API_BASE;
-  cfgDefaultArea.value = cfg.defaultArea || localStorage.getItem('adminDefaultArea') || 'A001';
-  cfgRolePolicy.value = cfg.rolePolicy || 'STRICT';
+async function loadSystemConfig(){
+  try{
+    const cfg = await apiFetch('/admin/system-config');
+    cfgApiBase.value = cfg.apiBase || API_BASE;
+    cfgDefaultArea.value = cfg.defaultArea || 'A001';
+    cfgRolePolicy.value = cfg.rolePolicy || 'STRICT';
+  }catch(e){
+    cfgApiBase.value = API_BASE;
+    cfgDefaultArea.value = 'A001';
+    cfgRolePolicy.value = 'STRICT';
+  }
 }
 
-function addDictItem(){
+async function addDictItem(){
   if(!dictType.value.trim() || !dictValue.value.trim()) return alert('请填写完整字典信息');
-  const list = readArr(LS_DICT);
-  list.unshift({id: Date.now(), type: dictType.value.trim(), value: dictValue.value.trim()});
-  writeArr(LS_DICT, list);
-  addAudit('系统配置', '新增字典项', `${dictType.value.trim()}=${dictValue.value.trim()}`);
-  dictType.value=''; dictValue.value='';
-  renderDict();
-  renderAuditLogs();
+  try{
+    await apiFetch('/admin/dict-items', {
+      method:'POST',
+      body: JSON.stringify({dictType: dictType.value.trim(), dictValue: dictValue.value.trim()})
+    });
+    dictType.value=''; dictValue.value='';
+    await renderDict();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
 }
 
-function delDict(id){
-  writeArr(LS_DICT, readArr(LS_DICT).filter(x=>x.id!==id));
-  addAudit('系统配置', '删除字典项', `id=${id}`);
-  renderDict();
-  renderAuditLogs();
+async function delDict(id){
+  try{
+    await apiFetch(`/admin/dict-items/${id}`, {method:'DELETE'});
+    await renderDict();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
 }
 
-function renderDict(){
-  const list = readArr(LS_DICT);
-  tbodyDict.innerHTML = list.map(x=>`<tr><td>${x.type}</td><td>${x.value}</td><td><button class='ghost' onclick='delDict(${x.id})'>删除</button></td></tr>`).join('');
+async function renderDict(){
+  try{
+    const list = await apiFetch('/admin/dict-items');
+    tbodyDict.innerHTML = list.map(x=>`<tr><td>${x.dictType}</td><td>${x.dictValue}</td><td><button class='ghost' onclick='delDict(${x.id})'>删除</button></td></tr>`).join('');
+  }catch(e){ tbodyDict.innerHTML = ''; }
 }
 
 async function assignHazard(){
@@ -304,27 +309,32 @@ function renderHazards(){
 }
 function changePage(d){ page += d; renderHazards(); }
 
-function saveRiskModel(){
-  const model = {
-    modelName: modelName.value.trim(),
-    wHazard: Number(wHazard.value || 0),
-    wPending: Number(wPending.value || 0),
-    wCritical: Number(wCritical.value || 0),
-    warningThreshold: Number(warningThreshold.value || 75)
-  };
-  localStorage.setItem(LS_MODEL, JSON.stringify(model));
-  addAudit('风险模型', '保存模型参数', JSON.stringify(model));
-  alert('风险模型参数已保存');
-  renderAuditLogs();
+async function saveRiskModel(){
+  try{
+    await apiFetch('/admin/risk-model', {
+      method:'PUT',
+      body: JSON.stringify({
+        modelName: modelName.value.trim(),
+        wHazard: Number(wHazard.value || 0),
+        wPending: Number(wPending.value || 0),
+        wCritical: Number(wCritical.value || 0),
+        warningThreshold: Number(warningThreshold.value || 75)
+      })
+    });
+    alert('风险模型参数已保存');
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
 }
 
-function loadRiskModel(){
-  const m = readObj(LS_MODEL, {});
-  if(m.modelName) modelName.value = m.modelName;
-  if(m.wHazard != null) wHazard.value = m.wHazard;
-  if(m.wPending != null) wPending.value = m.wPending;
-  if(m.wCritical != null) wCritical.value = m.wCritical;
-  if(m.warningThreshold != null) warningThreshold.value = m.warningThreshold;
+async function loadRiskModel(){
+  try{
+    const m = await apiFetch('/admin/risk-model');
+    if(m.modelName) modelName.value = m.modelName;
+    if(m.wHazard != null && m.wHazard !== '') wHazard.value = m.wHazard;
+    if(m.wPending != null && m.wPending !== '') wPending.value = m.wPending;
+    if(m.wCritical != null && m.wCritical !== '') wCritical.value = m.wCritical;
+    if(m.warningThreshold != null && m.warningThreshold !== '') warningThreshold.value = m.warningThreshold;
+  }catch(e){}
 }
 
 function warningTag(score){
@@ -359,35 +369,38 @@ function metrics(){
 
 async function loadKnowledge(){
   try{
-    knowledgeData = await apiFetch(`/knowledge/recommend?role=${knowRole.value}&riskLevel=${knowRisk.value}`);
-    tbodyKnowledge.innerHTML = knowledgeData.map(k=>`<tr><td>${k.title || '-'}</td><td>${k.targetRole || knowRole.value}</td><td>${k.riskLevel || knowRisk.value}</td></tr>`).join('');
-    addAudit('消防知识', '刷新推荐', `role=${knowRole.value}, risk=${knowRisk.value}, count=${knowledgeData.length}`);
+    knowledgeData = await apiFetch('/admin/knowledge-articles');
+    tbodyKnowledge.innerHTML = knowledgeData.map(k=>`<tr><td>${k.title || '-'}</td><td>${k.targetRole || '-'}</td><td>${k.targetRiskLevel || '-'}</td></tr>`).join('');
     renderAuditLogs();
   }catch(e){ alert(e.message); }
 }
 
-function addPushRule(){
+async function addPushRule(){
   if(!pushRuleName.value.trim()) return alert('请填写推送规则名');
-  const list = readArr(LS_PUSH_RULES);
-  list.unshift({id: Date.now(), name: pushRuleName.value.trim(), enabled: pushRuleEnabled.value === '1'});
-  writeArr(LS_PUSH_RULES, list);
-  addAudit('消防知识', '新增推送规则', `${pushRuleName.value.trim()}(${pushRuleEnabled.value === '1' ? '启用' : '停用'})`);
-  pushRuleName.value = '';
-  renderPushRules();
-  renderAuditLogs();
+  try{
+    await apiFetch('/admin/push-rules', {
+      method:'POST',
+      body: JSON.stringify({name: pushRuleName.value.trim(), enabled: pushRuleEnabled.value === '1'})
+    });
+    pushRuleName.value = '';
+    await renderPushRules();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
 }
 
-function togglePushRule(id){
-  const list = readArr(LS_PUSH_RULES).map(x=>x.id===id?({...x, enabled:!x.enabled}):x);
-  writeArr(LS_PUSH_RULES, list);
-  addAudit('消防知识', '切换推送规则', `id=${id}`);
-  renderPushRules();
-  renderAuditLogs();
+async function togglePushRule(id, enabled){
+  try{
+    await apiFetch(`/admin/push-rules/${id}/enabled`, {method:'PATCH', body: JSON.stringify({enabled: !enabled})});
+    await renderPushRules();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
 }
 
-function renderPushRules(){
-  const list = readArr(LS_PUSH_RULES);
-  tbodyPushRules.innerHTML = list.map(x=>`<tr><td>${x.name}</td><td>${x.enabled?'启用':'停用'}</td><td><button class='ghost' onclick='togglePushRule(${x.id})'>切换状态</button></td></tr>`).join('');
+async function renderPushRules(){
+  try{
+    const list = await apiFetch('/admin/push-rules');
+    tbodyPushRules.innerHTML = list.map(x=>`<tr><td>${x.name}</td><td>${x.enabled?'启用':'停用'}</td><td><button class='ghost' onclick='togglePushRule(${x.id}, ${x.enabled})'>切换状态</button></td></tr>`).join('');
+  }catch(e){ tbodyPushRules.innerHTML = ''; }
 }
 
 async function loadUsers(){
@@ -482,16 +495,20 @@ async function exportExcel(){
   }catch(e){ alert(`导出失败：${e.message}`); }
 }
 
-function clearAuditLogs(){
-  if(!confirm('确认清空本地审计日志？')) return;
-  writeArr(LS_AUDIT, []);
-  renderAuditLogs();
+async function clearAuditLogs(){
+  if(!confirm('确认清空系统审计日志？')) return;
+  try{
+    await apiFetch('/admin/audit-logs', {method:'DELETE'});
+    await renderAuditLogs();
+  }catch(e){ alert(e.message); }
 }
 
-function renderAuditLogs(){
-  const keyword = (logKeyword.value || '').trim().toLowerCase();
-  const list = readArr(LS_AUDIT).filter(x => !keyword || [x.module,x.operation,x.detail].join(' ').toLowerCase().includes(keyword));
-  tbodyLogs.innerHTML = list.map(x=>`<tr><td>${x.time}</td><td>${x.module}</td><td>${x.operation}</td><td>${x.detail}</td></tr>`).join('');
+async function renderAuditLogs(){
+  try{
+    const keyword = (logKeyword.value || '').trim();
+    auditLogs = await apiFetch(`/admin/audit-logs${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ''}`);
+    tbodyLogs.innerHTML = auditLogs.map(x=>`<tr><td>${(x.createdAt || '').replace('T',' ').slice(0,19)}</td><td>${x.module || '-'}</td><td>${x.operation || '-'}</td><td>${x.requestParams || '-'}</td></tr>`).join('');
+  }catch(e){ tbodyLogs.innerHTML = ''; }
 }
 
 ensureAdminRole();
@@ -502,6 +519,7 @@ loadUsers();
 renderAuditLogs();
 loadHazards();
 loadRisk();
+loadRiskModel();
 loadKnowledge();
 </script>
 </body>

@@ -27,6 +27,35 @@ CREATE TABLE users (
     UNIQUE KEY uk_users_username (username)
 ) ENGINE=InnoDB;
 
+
+CREATE TABLE system_config_items (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    config_key VARCHAR(100) NOT NULL,
+    config_value VARCHAR(1000) NOT NULL,
+    description VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_config_key (config_key)
+) ENGINE=InnoDB;
+
+CREATE TABLE data_dictionary_items (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    dict_type VARCHAR(100) NOT NULL,
+    dict_value VARCHAR(255) NOT NULL,
+    enabled TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE push_rules (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(120) NOT NULL,
+    enabled TINYINT(1) NOT NULL DEFAULT 1,
+    rule_content VARCHAR(500),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 CREATE TABLE housing_info (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     building_no VARCHAR(50) NOT NULL,
@@ -248,6 +277,26 @@ INSERT INTO dangerous_goods_usage (id, goods_id, housing_id, facility_id, user_i
 (1, 1, 1, NULL, 4, 15.00, 'kg', '居民炊事', NOW() - INTERVAL 1 DAY),
 (2, 2, NULL, 3, 2, 8.50, 'L', '设备维护', NOW() - INTERVAL 2 DAY),
 (3, 3, NULL, 1, 3, 30.00, 'L', '应急发电', NOW() - INTERVAL 7 DAY);
+
+
+INSERT INTO system_config_items (id, config_key, config_value, description) VALUES
+(1, 'apiBase', 'http://localhost:8080/api/v1', '系统API地址'),
+(2, 'defaultArea', 'A001', '默认辖区编码'),
+(3, 'rolePolicy', 'STRICT', '权限分配策略'),
+(4, 'modelName', '城中村消防风险量化模型V1', '风险模型名称'),
+(5, 'wHazard', '0.5', '隐患数量权重'),
+(6, 'wPending', '0.3', '待处理权重'),
+(7, 'wCritical', '0.2', '高风险权重'),
+(8, 'warningThreshold', '75', '风险预警阈值');
+
+INSERT INTO data_dictionary_items (id, dict_type, dict_value, enabled) VALUES
+(1, '隐患类型', '飞线充电', 1),
+(2, '隐患类型', '消防通道堵塞', 1),
+(3, '通知渠道', '站内消息', 1);
+
+INSERT INTO push_rules (id, name, enabled, rule_content) VALUES
+(1, '高风险区域每日推送', 1, '每日08:00向高风险辖区推送消防提醒'),
+(2, '网格员巡查结果推送', 1, '巡查提交后向管理员同步结果');
 
 INSERT INTO risk_type_weights (id, hazard_type, type_weight, is_high_risk, enabled, remark) VALUES
 (1, 'ELECTRICAL', 8, 1, 1, '电气线路老化、私拉乱接'),
