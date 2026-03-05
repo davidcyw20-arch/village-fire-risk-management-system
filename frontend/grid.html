@@ -43,6 +43,21 @@
     </section>
 
     <section class="panel">
+      <h3>辖区任务列表</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>编号</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th><th>上报时间</th><th>处理前照片</th><th>处理后照片</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagebar">
+        <button class="ghost" onclick="changePage(-1)">上一页</button>
+        <span id="pageInfo"></span>
+        <button class="ghost" onclick="changePage(1)">下一页</button>
+      </div>
+    </section>
+
+    <section class="panel">
       <h3>隐患任务处理与反馈</h3>
       <div class="toolbar">
         <input id="hazardId" placeholder="隐患编号" />
@@ -77,35 +92,29 @@
 
     <section class="panel">
       <h3>辖区信息维护（建筑与居民）</h3>
-      <div class="grid">
-        <input id="buildingName" placeholder="建筑名称" />
-        <input id="buildingAddress" placeholder="建筑地址" />
-        <button onclick="addBuilding()">新增建筑信息</button>
-
-        <input id="residentName" placeholder="居民姓名" />
-        <input id="residentPhone" placeholder="居民电话" />
-        <button onclick="addResident()">新增居民信息</button>
+      <div class="maintain-wrap">
+        <div class="maintain-block">
+          <h4>建筑信息维护</h4>
+          <div class="grid">
+            <input id="buildingName" placeholder="建筑名称" />
+            <input id="buildingAddress" placeholder="建筑地址" />
+            <button onclick="addBuilding()">新增建筑信息</button>
+          </div>
+        </div>
+        <div class="maintain-block">
+          <h4>居民信息维护</h4>
+          <div class="grid">
+            <input id="residentName" placeholder="居民姓名" />
+            <input id="residentPhone" placeholder="居民电话" />
+            <button onclick="addResident()">新增居民信息</button>
+          </div>
+        </div>
       </div>
-      <div class="table-wrap" style="margin-top:8px">
+      <div class="table-wrap" style="margin-top:10px">
         <table>
           <thead><tr><th>类型</th><th>名称</th><th>详情</th><th>操作</th></tr></thead>
           <tbody id="tbodyAreaInfo"></tbody>
         </table>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h3>辖区任务列表</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>编号</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th><th>上报时间</th></tr></thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-      <div class="pagebar">
-        <button class="ghost" onclick="changePage(-1)">上一页</button>
-        <span id="pageInfo"></span>
-        <button class="ghost" onclick="changePage(1)">下一页</button>
       </div>
     </section>
   </main>
@@ -124,6 +133,7 @@ localStorage.setItem(`grid_area_${me.username}`, areaCode);
 
 function patrolKey(){ return `grid_patrol_${me.username}`; }
 function areaInfoKey(){ return `grid_area_info_${me.username}`; }
+function processPhotoKey(id){ return `grid_process_photo_${id}`; }
 
 function ensureGridRole(){
   whoUser.textContent = me.username || '未知';
@@ -136,6 +146,10 @@ function ensureGridRole(){
 }
 
 function fmtTime(v){ return v ? String(v).replace('T',' ') : '-'; }
+function photoCell(url){
+  if(!url) return '<span class="sub">无</span>';
+  return `<a class="link" href="${url}" target="_blank"><img src="${url}" alt="照片" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid rgba(148,163,184,.45)"/></a>`;
+}
 
 async function uploadProcessPhoto(){
   try{
@@ -156,6 +170,7 @@ async function processHazard(){
       method:'POST',
       body:JSON.stringify({note: feedback, targetStatus: targetStatus.value})
     });
+    if(processPhotoUrl){ localStorage.setItem(processPhotoKey(hazardId.value), processPhotoUrl); }
     alert('处理提交成功');
     processPhotoUrl = '';
     processImageUrl.textContent = '未上传';
@@ -199,6 +214,8 @@ function render(){
     <td>${toHazardStatusLabel(x.status)}</td>
     <td>${x.areaCode}</td>
     <td>${fmtTime(x.createdAt)}</td>
+    <td>${photoCell(x.imageUrl)}</td>
+    <td>${photoCell(localStorage.getItem(processPhotoKey(x.id)))}</td>
   </tr>`).join('');
   pageInfo.textContent = `第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;
 }

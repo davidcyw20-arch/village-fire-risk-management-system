@@ -207,3 +207,9 @@ th{background:rgba(255,255,255,.08)}
 .login-shell.alt .login-right-card{background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.62));}
 .login-shell.alt .login-logo{border-radius:14px;box-shadow:0 8px 16px rgba(37,99,235,.28)}
 .login-shell.alt .login-btn{background:linear-gradient(90deg,#2f7de1,#3b82f6,#4f46e5)}
+
+
+.maintain-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.maintain-block{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px}
+.maintain-block h4{margin:0 0 8px;color:#d7e7ff}
+@media (max-width:860px){.maintain-wrap{grid-template-columns:1fr}}
