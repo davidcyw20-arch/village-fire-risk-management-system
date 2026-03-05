@@ -60,18 +60,22 @@
     <section class="panel">
       <h3>② 用户综合管理（居民/网格员）</h3>
       <div class="toolbar">
-        <input id="userKeyword" placeholder="搜索用户（用户名/角色）" oninput="renderUsers()" style="flex:1;min-width:260px" />
+        <input id="userKeyword" placeholder="搜索用户（用户名/角色）" oninput="renderUsers()" style="flex:1;min-width:220px" />
+        <input id="newUsername" placeholder="新增用户名" />
+        <input id="newFullName" placeholder="姓名" />
+        <input id="newUserPassword" placeholder="初始密码" value="123456" />
         <select id="newUserRole">
           <option value="RESIDENT">居民</option>
           <option value="GRID">网格员</option>
           <option value="ADMIN">管理员</option>
         </select>
-        <input id="newUsername" placeholder="新增用户名" />
-        <button class="ghost" onclick="addManagedUser()">新增用户档案</button>
+        <input id="newUserArea" placeholder="辖区编码(如A001)" />
+        <button class="ghost" onclick="addManagedUser()">新增用户</button>
+        <button class="ghost" onclick="loadUsers()">刷新用户</button>
       </div>
       <div class="table-wrap" style="margin-top:8px">
         <table>
-          <thead><tr><th>用户名</th><th>角色</th><th>状态</th><th>来源</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>用户名</th><th>姓名</th><th>角色</th><th>辖区</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="tbodyUsers"></tbody>
         </table>
       </div>
@@ -196,7 +200,6 @@ let knowledgeData = [];
 
 const LS_SYS_CONFIG = 'admin_sys_config';
 const LS_DICT = 'admin_data_dict';
-const LS_USERS = 'admin_managed_users';
 const LS_PUSH_RULES = 'admin_push_rules';
 const LS_AUDIT = 'admin_audit_logs';
 const LS_MODEL = 'admin_risk_model';
@@ -282,7 +285,6 @@ async function urgeHazard(){
 async function loadHazards(){
   try{
     allHazards = await apiFetch('/hazards');
-    mergeUsersFromHazards();
     renderHazards();
     metrics();
     refreshDashboard();
@@ -388,48 +390,64 @@ function renderPushRules(){
   tbodyPushRules.innerHTML = list.map(x=>`<tr><td>${x.name}</td><td>${x.enabled?'启用':'停用'}</td><td><button class='ghost' onclick='togglePushRule(${x.id})'>切换状态</button></td></tr>`).join('');
 }
 
-function mergeUsersFromHazards(){
-  const current = readArr(LS_USERS);
-  const map = new Map(current.map(x=>[x.username, x]));
-  allHazards.forEach(h=>{
-    const reporter = h.reportedBy?.username;
-    const grid = h.assignedTo?.username;
-    if(reporter && !map.has(reporter)) map.set(reporter, {username: reporter, role:'RESIDENT', status:'PENDING', source:'隐患上报'});
-    if(grid && !map.has(grid)) map.set(grid, {username: grid, role:'GRID', status:'APPROVED', source:'任务分派'});
-  });
-  writeArr(LS_USERS, Array.from(map.values()));
-  renderUsers();
+async function loadUsers(){
+  try{
+    const users = await apiFetch('/admin/users');
+    window.adminUsers = users || [];
+    renderUsers();
+  }catch(e){ alert(e.message); }
 }
 
-function addManagedUser(){
+async function addManagedUser(){
   const username = newUsername.value.trim();
-  if(!username) return alert('请输入用户名');
-  const list = readArr(LS_USERS);
-  if(list.some(x=>x.username===username)) return alert('该用户已存在');
-  list.unshift({username, role:newUserRole.value, status:'PENDING', source:'管理员新增'});
-  writeArr(LS_USERS, list);
-  addAudit('用户管理', '新增用户档案', `${username}(${newUserRole.value})`);
-  newUsername.value = '';
-  renderUsers();
-  renderAuditLogs();
+  const fullName = newFullName.value.trim() || username;
+  const password = newUserPassword.value.trim();
+  if(!username || !password) return alert('请输入用户名和初始密码');
+  try{
+    await apiFetch('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        username,
+        fullName,
+        password,
+        role: newUserRole.value,
+        areaCode: (newUserArea.value || '').trim().toUpperCase()
+      })
+    });
+    addAudit('用户管理', '新增用户', `${username}(${newUserRole.value})`);
+    newUsername.value = '';
+    newFullName.value = '';
+    newUserArea.value = '';
+    renderAuditLogs();
+    loadUsers();
+  }catch(e){ alert(e.message); }
 }
 
-function setUserStatus(username, status){
-  const list = readArr(LS_USERS).map(x=>x.username===username?({...x,status}):x);
-  writeArr(LS_USERS, list);
-  addAudit('用户管理', status==='APPROVED'?'审核通过':'停用账户', username);
-  renderUsers();
-  renderAuditLogs();
+async function setUserStatus(userId, enabled){
+  try{
+    await apiFetch(`/admin/users/${userId}/enabled`, {
+      method: 'PATCH',
+      body: JSON.stringify({enabled})
+    });
+    addAudit('用户管理', enabled ? '启用账户' : '停用账户', `userId=${userId}`);
+    renderAuditLogs();
+    loadUsers();
+  }catch(e){ alert(e.message); }
 }
 
 function renderUsers(){
   const keyword = (userKeyword.value || '').trim().toLowerCase();
-  const list = readArr(LS_USERS).filter(x => !keyword || x.username.toLowerCase().includes(keyword) || (x.role||'').toLowerCase().includes(keyword));
+  const users = window.adminUsers || [];
+  const list = users.filter(x => !keyword ||
+    String(x.username || '').toLowerCase().includes(keyword) ||
+    String(x.role || '').toLowerCase().includes(keyword)
+  );
   tbodyUsers.innerHTML = list.map(x=>`<tr>
-    <td>${x.username}</td><td>${x.role}</td><td>${x.status || 'PENDING'}</td><td>${x.source || '-'}</td>
+    <td>${x.id}</td><td>${x.username}</td><td>${x.fullName || '-'}</td><td>${x.role}</td><td>${x.areaCode || '-'}</td>
+    <td>${x.enabled ? '已启用' : '已停用'}</td>
     <td>
-      <button class='ghost' onclick="setUserStatus('${x.username}','APPROVED')">通过</button>
-      <button class='ghost' onclick="setUserStatus('${x.username}','DISABLED')">停用</button>
+      <button class='ghost' onclick='setUserStatus(${x.id}, true)'>启用</button>
+      <button class='ghost' onclick='setUserStatus(${x.id}, false)'>停用</button>
     </td>
   </tr>`).join('');
 }
@@ -480,7 +498,7 @@ ensureAdminRole();
 loadSystemConfig();
 renderDict();
 renderPushRules();
-renderUsers();
+loadUsers();
 renderAuditLogs();
 loadHazards();
 loadRisk();

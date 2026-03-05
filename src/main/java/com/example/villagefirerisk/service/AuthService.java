@@ -7,6 +7,8 @@ import com.example.villagefirerisk.repository.UserRepository;
 import com.example.villagefirerisk.security.JwtTokenProvider;
 import com.example.villagefirerisk.util.BusinessException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,8 +45,16 @@ public class AuthService {
     }
 
     public AuthDtos.LoginResponse login(AuthDtos.LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+        } catch (DisabledException ex) {
+            throw new BusinessException("账号已被停用，请联系管理员");
+        } catch (BadCredentialsException ex) {
+            throw new BusinessException("用户名或密码错误");
+        }
+
         String token = jwtTokenProvider.generateToken(authentication);
         User user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new BusinessException("用户不存在"));
         return new AuthDtos.LoginResponse(token, user.getUsername(), user.getRole().name());
