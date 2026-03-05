@@ -1,26 +1,253 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>居民端</title><link rel="stylesheet" href="./styles.css" /><script src="./common.js?v=20260305"></script></head>
-<body><div class="app">
-  <aside class="sidebar"><div class="brand">居民用户端</div><nav class="menu"><a class="active" href="#">隐患上报</a><a href="./map.html">风险地图</a><a href="./login.html">返回登录</a></nav></aside>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>居民端</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./common.js?v=20260305"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">居民用户端</div>
+    <nav class="menu">
+      <a class="active" href="#">隐患上报</a>
+      <a href="./map.html">风险地图</a>
+      <a href="./login.html">返回登录</a>
+    </nav>
+  </aside>
+
   <main class="main">
-    <div class="topbar"><div><div class="title">居民工作台</div><div class="sub">上报隐患、查看处理进度、接收消防知识与预警</div></div><button class="danger" onclick="clearToken();location.href='./login.html'">退出</button></div>
-    <section class="cards"><div class="card"><h4>待处理隐患</h4><div id="m1" class="metric">-</div></div><div class="card"><h4>处理中</h4><div id="m2" class="metric">-</div></div><div class="card"><h4>已完成</h4><div id="m3" class="metric">-</div></div><div class="card"><h4>本页总数</h4><div id="m4" class="metric">-</div></div></section>
-    <section class="panel"><h3>消防隐患上报 <span class="badge">拍照/描述/定位</span></h3><div class="grid">
-      <input id="title" placeholder="标题" /><input id="hazardType" placeholder="类型，如消防通道堵塞" />
-      <input id="areaCode" placeholder="区域编码" /><input id="address" placeholder="地址" />
-      <input id="latitude" placeholder="纬度" /><input id="longitude" placeholder="经度" />
-      <input id="imageUrl" placeholder="图片URL（可先上传）" style="grid-column:1/-1" /><select id="severity"><option value="LOW">低风险</option><option value="MID" selected>中风险</option><option value="HIGH">高风险</option><option value="CRITICAL">极高风险</option></select>
-      <button onclick="reportHazard()">提交上报</button>
-      <textarea id="description" placeholder="隐患描述" style="grid-column:1/-1"></textarea>
-    </div></section>
-    <section class="panel"><h3>我的隐患进度</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th></tr></thead><tbody id="tbody"></tbody></table></div><div class="pagebar"><button class="ghost" onclick="changePage(-1)">上一页</button><span id="pageInfo"></span><button class="ghost" onclick="changePage(1)">下一页</button></div></section>
+    <div class="topbar">
+      <div>
+        <div class="title">居民工作台</div>
+        <div class="sub">注册登录、个人信息维护、隐患上报、进度查询、知识接收</div>
+      </div>
+      <button class="danger" onclick="clearToken();location.href='./login.html'">退出</button>
+    </div>
+
+    <section class="cards">
+      <div class="card"><h4>待处理隐患</h4><div id="m1" class="metric">-</div></div>
+      <div class="card"><h4>处理中</h4><div id="m2" class="metric">-</div></div>
+      <div class="card"><h4>已完成</h4><div id="m3" class="metric">-</div></div>
+      <div class="card"><h4>我的总上报</h4><div id="m4" class="metric">-</div></div>
+    </section>
+
+    <section class="panel">
+      <h3>个人信息管理</h3>
+      <div class="grid">
+        <input id="profileName" placeholder="姓名" />
+        <input id="profilePhone" placeholder="联系方式" />
+        <input id="profileAddress" placeholder="居住地址" style="grid-column:1/-1" />
+        <button onclick="saveProfile()">保存信息</button>
+        <button class="ghost" onclick="loadProfile()">重新读取</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>消防隐患上报 <span class="badge">拍照/描述/定位</span></h3>
+      <div class="grid">
+        <input id="title" placeholder="标题" />
+        <select id="hazardType">
+          <option value="BLOCKED_EXIT">消防通道堵塞</option>
+          <option value="GAS_LEAK">燃气泄漏风险</option>
+          <option value="ELECTRICAL">电气隐患</option>
+          <option value="FIRE_FACILITY_DAMAGE">消防设施损坏</option>
+          <option value="ILLEGAL_STORAGE">违规存放易燃物</option>
+        </select>
+
+        <input id="areaCode" placeholder="区域编码，如 A001" />
+        <input id="address" placeholder="详细地址" />
+
+        <input id="latitude" placeholder="纬度" />
+        <input id="longitude" placeholder="经度" />
+
+        <input id="imageUrl" placeholder="隐患照片URL（可先上传）" style="grid-column:1/-1" />
+
+        <select id="severity">
+          <option value="LOW">低风险</option>
+          <option value="MID" selected>中风险</option>
+          <option value="HIGH">高风险</option>
+          <option value="CRITICAL">极高风险</option>
+        </select>
+        <button class="ghost" onclick="fillCurrentLocation()">获取当前位置</button>
+
+        <button onclick="reportHazard()">提交上报</button>
+        <textarea id="description" placeholder="隐患描述" style="grid-column:1/-1"></textarea>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>风险可视化入口</h3>
+      <div class="toolbar">
+        <span class="badge">类型分级：电气 / 通道 / 燃气 / 消防设施</span>
+        <span class="badge">状态分级：待受理 / 处理中 / 已解决</span>
+        <button class="ghost" onclick="location.href='./map.html'">打开地图查看点位</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>我的隐患进度查询</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr><th>ID</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th><th>上报时间</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagebar">
+        <button class="ghost" onclick="changePage(-1)">上一页</button>
+        <span id="pageInfo"></span>
+        <button class="ghost" onclick="changePage(1)">下一页</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>信息接收（消防知识 / 预警提示）</h3>
+      <div class="toolbar">
+        <span class="sub">依据当前风险等级推荐知识内容</span>
+        <button class="ghost" onclick="loadKnowledge()">刷新推荐</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>标题</th><th>角色</th><th>风险等级</th><th>内容摘要</th></tr></thead>
+          <tbody id="tbodyKnowledge"></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 </div>
+
 <script>
-let allData=[];let page=1;const pageSize=5;
-async function reportHazard(){try{await apiFetch('/hazards',{method:'POST',body:JSON.stringify({title:title.value,description:description.value,hazardType:hazardType.value,areaCode:areaCode.value,address:address.value,latitude:Number(latitude.value),longitude:Number(longitude.value),imageUrl:imageUrl.value,severity:severity.value})});alert('上报成功');loadHazards();}catch(e){alert(e.message)}}
-async function loadHazards(){try{allData=await apiFetch('/hazards');render();metrics();}catch(e){alert(e.message)}}
-function metrics(){m1.textContent=allData.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED').length;m2.textContent=allData.filter(x=>x.status==='IN_PROGRESS').length;m3.textContent=allData.filter(x=>x.status==='RESOLVED').length;m4.textContent=allData.length;}
-function render(){const p=paginate(allData,page,pageSize);page=p.currentPage;tbody.innerHTML=p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${toHazardTypeLabel(x.hazardType)}</td><td>${toHazardStatusLabel(x.status)}</td><td>${x.areaCode}</td></tr>`).join('');pageInfo.textContent=`第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;}
-function changePage(d){page+=d;render();}
+let allData = [];
+let mine = [];
+let page = 1;
+const pageSize = 5;
+
+const me = getCurrentUser();
+
+function fmtTime(v){ return v ? String(v).replace('T',' ') : '-'; }
+
+function getProfileKey(){ return `resident_profile_${me.username || 'guest'}`; }
+
+function saveProfile(){
+  const profile = {
+    name: profileName.value.trim(),
+    phone: profilePhone.value.trim(),
+    address: profileAddress.value.trim(),
+  };
+  localStorage.setItem(getProfileKey(), JSON.stringify(profile));
+  alert('个人信息已保存');
+}
+
+function loadProfile(){
+  const raw = localStorage.getItem(getProfileKey());
+  if (!raw) return;
+  const p = JSON.parse(raw);
+  profileName.value = p.name || '';
+  profilePhone.value = p.phone || '';
+  profileAddress.value = p.address || '';
+}
+
+function inferMyHazards(list){
+  if (!me.username) return list;
+  const own = list.filter(x => x.reportedBy && x.reportedBy.username === me.username);
+  return own.length ? own : list;
+}
+
+function currentRiskLevel(){
+  if (!mine.length) return 'LOW';
+  const unresolved = mine.filter(x => x.status !== 'RESOLVED');
+  const src = unresolved.length ? unresolved : mine;
+  const rank = {LOW:1, MID:2, HIGH:3, CRITICAL:4};
+  return src.reduce((best, x) => rank[x.severity] > rank[best] ? x.severity : best, 'LOW');
+}
+
+async function reportHazard(){
+  try{
+    await apiFetch('/hazards',{
+      method:'POST',
+      body:JSON.stringify({
+        title:title.value,
+        description:description.value,
+        hazardType:hazardType.value,
+        areaCode:areaCode.value,
+        address:address.value,
+        latitude:Number(latitude.value),
+        longitude:Number(longitude.value),
+        imageUrl:imageUrl.value,
+        severity:severity.value
+      })
+    });
+    alert('上报成功');
+    loadHazards();
+  }catch(e){alert(e.message)}
+}
+
+async function loadHazards(){
+  try{
+    allData = await apiFetch('/hazards');
+    mine = inferMyHazards(allData);
+    render();
+    metrics();
+    loadKnowledge();
+  }catch(e){alert(e.message)}
+}
+
+function metrics(){
+  m1.textContent = mine.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED').length;
+  m2.textContent = mine.filter(x=>x.status==='IN_PROGRESS').length;
+  m3.textContent = mine.filter(x=>x.status==='RESOLVED').length;
+  m4.textContent = mine.length;
+}
+
+function render(){
+  const p = paginate(mine, page, pageSize);
+  page = p.currentPage;
+  tbody.innerHTML = p.pageItems.map(x=>`
+    <tr>
+      <td>${x.id}</td>
+      <td>${x.title}</td>
+      <td>${toHazardTypeLabel(x.hazardType)}</td>
+      <td>${toHazardStatusLabel(x.status)}</td>
+      <td>${x.areaCode}</td>
+      <td>${fmtTime(x.createdAt)}</td>
+    </tr>`).join('');
+  pageInfo.textContent = `第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;
+}
+
+function changePage(d){ page += d; render(); }
+
+async function loadKnowledge(){
+  try{
+    const riskLevel = currentRiskLevel();
+    const list = await apiFetch(`/knowledge/recommend?role=RESIDENT&riskLevel=${riskLevel}`);
+    tbodyKnowledge.innerHTML = list.map(x=>`
+      <tr>
+        <td>${x.title}</td>
+        <td>居民</td>
+        <td>${toRiskLevelLabel(x.riskLevel)}</td>
+        <td>${(x.content || '').slice(0,80)}...</td>
+      </tr>`).join('');
+  }catch(e){
+    tbodyKnowledge.innerHTML = `<tr><td colspan="4">推荐加载失败：${e.message}</td></tr>`;
+  }
+}
+
+function fillCurrentLocation(){
+  if (!navigator.geolocation) return alert('浏览器不支持定位');
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      latitude.value = pos.coords.latitude.toFixed(7);
+      longitude.value = pos.coords.longitude.toFixed(7);
+    },
+    ()=>alert('定位失败，请手动输入经纬度')
+  );
+}
+
+loadProfile();
 loadHazards();
-</script></body></html>
+</script>
+</body>
+</html>

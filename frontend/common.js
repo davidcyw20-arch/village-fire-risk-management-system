@@ -86,3 +86,23 @@ const RISK_LEVEL_LABELS = {
 function toHazardTypeLabel(v){ return HAZARD_TYPE_LABELS[v] || v || '-'; }
 function toHazardStatusLabel(v){ return HAZARD_STATUS_LABELS[v] || v || '-'; }
 function toRiskLevelLabel(v){ return RISK_LEVEL_LABELS[v] || v || '-'; }
+
+
+function parseJwtPayload(token) {
+  if (!token || token.split('.').length < 2) return {};
+  try {
+    const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = decodeURIComponent(atob(payload).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(decoded);
+  } catch (e) {
+    return {};
+  }
+}
+
+function getCurrentUser() {
+  const p = parseJwtPayload(getToken());
+  return {
+    username: p.sub || '',
+    role: p.role || '',
+  };
+}
