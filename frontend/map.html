@@ -103,7 +103,6 @@ async function loadHazards(){
 }
 
 loadHazards();
-setInterval(loadHazards, 10000);
 window.addEventListener('focus', loadHazards);
 window.addEventListener('pageshow', loadHazards);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) loadHazards(); });

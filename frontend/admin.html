@@ -67,8 +67,7 @@
         <select id="newUserRole">
           <option value="RESIDENT">居民</option>
           <option value="GRID">网格员</option>
-          <option value="ADMIN">管理员</option>
-        </select>
+                  </select>
         <input id="newUserArea" placeholder="辖区编码(如A001)" />
         <button class="ghost" onclick="addManagedUser()">新增用户</button>
         <button class="ghost" onclick="loadUsers()">刷新用户</button>
@@ -128,18 +127,26 @@
     <section class="panel">
       <h3>⑤ 消防知识管理与推送规则</h3>
       <div class="toolbar">
+        <input id="knowTitle" placeholder="知识标题" style="min-width:200px" />
+        <input id="knowCategory" placeholder="分类（如：ELECTRICAL）" style="min-width:180px" />
         <select id="knowRole">
           <option value="RESIDENT">居民</option>
           <option value="GRID">网格员</option>
-          <option value="ADMIN">管理员</option>
+          <option value="ALL">全角色</option>
         </select>
         <select id="knowRisk">
           <option value="LOW">低风险</option>
           <option value="MID">中风险</option>
           <option value="HIGH">高风险</option>
           <option value="CRITICAL">极高风险</option>
+          <option value="ALL">全部风险</option>
         </select>
-        <button onclick="loadKnowledge()">刷新推荐知识</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <input id="knowSource" placeholder="来源（可选）" style="min-width:180px" />
+        <input id="knowContent" placeholder="知识内容" style="flex:1;min-width:300px" />
+        <button onclick="createKnowledge()">新增知识</button>
+        <button class="ghost" onclick="loadKnowledge()">刷新知识</button>
       </div>
       <div class="toolbar" style="margin-top:8px">
         <input id="pushRuleName" placeholder="推送规则名（如：高风险区域每日推送）" style="min-width:260px" />
@@ -148,7 +155,7 @@
       </div>
       <div class="table-wrap" style="margin-top:8px">
         <table>
-          <thead><tr><th>知识标题</th><th>适用角色</th><th>风险级别</th></tr></thead>
+          <thead><tr><th>ID</th><th>知识标题</th><th>适用角色</th><th>风险级别</th><th>发布</th><th>操作</th></tr></thead>
           <tbody id="tbodyKnowledge"></tbody>
         </table>
       </div>
@@ -375,10 +382,63 @@ function metrics(){
   a4.textContent = riskData.filter(r=>r.riskLevel==='HIGH'||r.riskLevel==='CRITICAL').length;
 }
 
+async function createKnowledge(){
+  const title = (knowTitle.value || '').trim();
+  const category = (knowCategory.value || '').trim();
+  const content = (knowContent.value || '').trim();
+  if(!title || !category || !content) return alert('请填写知识标题、分类和内容');
+  try{
+    await apiFetch('/admin/knowledge-articles', {
+      method:'POST',
+      body: JSON.stringify({
+        title,
+        category,
+        targetRole: knowRole.value,
+        targetRiskLevel: knowRisk.value,
+        content,
+        source: (knowSource.value || '').trim(),
+        published: true
+      })
+    });
+    knowTitle.value='';
+    knowCategory.value='';
+    knowSource.value='';
+    knowContent.value='';
+    await loadKnowledge();
+  }catch(e){ alert(e.message); }
+}
+
+async function toggleKnowledgePublished(id, publish){
+  const item = (knowledgeData || []).find(x => x.id === id);
+  if(!item) return;
+  try{
+    await apiFetch(`/admin/knowledge-articles/${id}`, {
+      method:'PUT',
+      body: JSON.stringify({
+        title: item.title,
+        category: item.category || 'GENERAL',
+        targetRole: item.targetRole,
+        targetRiskLevel: item.targetRiskLevel,
+        content: item.content || '',
+        source: item.source || '',
+        published: publish
+      })
+    });
+    await loadKnowledge();
+  }catch(e){ alert(e.message); }
+}
+
 async function loadKnowledge(){
   try{
     knowledgeData = await apiFetch('/admin/knowledge-articles');
-    tbodyKnowledge.innerHTML = knowledgeData.map(k=>`<tr><td>${k.title || '-'}</td><td>${k.targetRole || '-'}</td><td>${k.targetRiskLevel || '-'}</td></tr>`).join('');
+    tbodyKnowledge.innerHTML = knowledgeData.map(k=>`<tr>
+      <td>${k.id}</td>
+      <td>${k.title || '-'}</td>
+      <td>${k.targetRole || '-'}</td>
+      <td>${k.targetRiskLevel || '-'}</td>
+      <td>${k.published ? '是' : '否'}</td>
+      <td><button class='ghost' onclick='toggleKnowledgePublished(${k.id}, ${!k.published})'>${k.published ? '下架' : '发布'}</button></td>
+    </tr>`).join('');
     renderAuditLogs();
   }catch(e){ alert(e.message); }
 }
