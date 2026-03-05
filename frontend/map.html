@@ -1,10 +1,35 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>风险地图</title><link rel="stylesheet" href="./styles.css" /><script src="./common.js?v=20260305"></script><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script></head>
-<body><div class="app"><aside class="sidebar"><div class="brand">风险可视化</div><nav class="menu"><a class="active" href="#">风险地图</a><a href="./resident.html">居民端</a><a href="./grid.html">网格员端</a><a href="./admin.html">管理员端</a></nav></aside>
-<main class="main"><div class="topbar"><div><div class="title">风险地图与隐患点位</div><div class="sub">按状态/类型直观展示隐患分布，支持点击取经纬度</div></div><button class="danger" onclick="clearToken();location.href='./login.html'">退出</button></div>
+<body><div class="app"><aside class="sidebar"><div class="brand">风险可视化</div><nav class="menu"><a class="active" href="#">风险地图</a><a id="returnLink" href="./login.html">返回</a></nav></aside>
+<main class="main"><div class="topbar"><div><div class="title">风险地图与隐患点位</div><div class="sub">按状态/类型直观展示隐患分布，支持点击取经纬度</div></div><div style="display:flex;gap:8px"><button class="ghost" id="returnBtn" onclick="goBackToSource()">返回来源端</button><button class="danger" onclick="clearToken();location.href='./login.html'">退出</button></div></div>
 <section class="cards"><div class="card"><h4>隐患总数</h4><div id="m1" class="metric">-</div></div><div class="card"><h4>未处理</h4><div id="m2" class="metric">-</div></div><div class="card"><h4>处理中</h4><div id="m3" class="metric">-</div></div><div class="card"><h4>已处理</h4><div id="m4" class="metric">-</div></div></section>
 <section class="panel"><div class="toolbar"><span class="sub">点击地图获取坐标：</span><input id="lat" readonly placeholder="纬度" /><input id="lng" readonly placeholder="经度" /><button class="ghost" onclick="loadHazards()">刷新点位</button></div><div id="map"></div></section>
 </main></div>
 <script>
+const SOURCE_CONFIG = {
+  resident: {name:'居民端', href:'./resident.html'},
+  grid: {name:'网格员端', href:'./grid.html'},
+  admin: {name:'管理员端', href:'./admin.html'}
+};
+
+function resolveSource() {
+  const from = new URLSearchParams(location.search).get('from');
+  if (from && SOURCE_CONFIG[from]) return from;
+  const me = getCurrentUser();
+  if (me.role === 'ADMIN') return 'admin';
+  if (me.role === 'GRID') return 'grid';
+  return 'resident';
+}
+
+const source = resolveSource();
+const sourceCfg = SOURCE_CONFIG[source];
+returnLink.textContent = `返回${sourceCfg.name}`;
+returnLink.href = sourceCfg.href;
+returnBtn.textContent = `返回${sourceCfg.name}`;
+
+function goBackToSource() {
+  location.href = sourceCfg.href;
+}
+
 const map = L.map('map').setView([31.2304,121.4737], 14);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20}).addTo(map);
 let markerGroup = L.layerGroup().addTo(map);
