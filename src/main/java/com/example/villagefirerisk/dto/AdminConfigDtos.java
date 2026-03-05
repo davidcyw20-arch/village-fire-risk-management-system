@@ -117,6 +117,22 @@ public class AdminConfigDtos {
         public void setPublished(Boolean published) { this.published = published; }
     }
 
+
+    public static class RiskWarningScanResponse {
+        private Integer warningThreshold;
+        private List<com.example.villagefirerisk.dto.RiskAreaResponse> hitAreas;
+
+        public RiskWarningScanResponse(Integer warningThreshold, List<com.example.villagefirerisk.dto.RiskAreaResponse> hitAreas) {
+            this.warningThreshold = warningThreshold;
+            this.hitAreas = hitAreas;
+        }
+
+        public Integer getWarningThreshold() { return warningThreshold; }
+        public void setWarningThreshold(Integer warningThreshold) { this.warningThreshold = warningThreshold; }
+        public List<com.example.villagefirerisk.dto.RiskAreaResponse> getHitAreas() { return hitAreas; }
+        public void setHitAreas(List<com.example.villagefirerisk.dto.RiskAreaResponse> hitAreas) { this.hitAreas = hitAreas; }
+    }
+
     public static class ValueResponse {
         private String key;
         private String value;

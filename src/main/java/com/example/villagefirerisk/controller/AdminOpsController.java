@@ -55,6 +55,12 @@ public class AdminOpsController {
         return ApiResponse.success(adminOpsService.getRiskModel());
     }
 
+    @PostMapping("/risk-warnings/scan")
+    @OperationLoggable(module = "AdminRiskModel", operation = "Scan Risk Warnings")
+    public ApiResponse<AdminConfigDtos.RiskWarningScanResponse> scanRiskWarnings() {
+        return ApiResponse.success(adminOpsService.scanRiskWarnings());
+    }
+
     @PutMapping("/risk-model")
     @OperationLoggable(module = "AdminRiskModel", operation = "Save Risk Model")
     public ApiResponse<Map<String, String>> saveRiskModel(@Valid @RequestBody AdminConfigDtos.RiskModelRequest request) {

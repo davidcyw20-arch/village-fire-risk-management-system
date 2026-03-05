@@ -353,13 +353,15 @@ async function loadRisk(){
   }catch(e){ alert(e.message); }
 }
 
-function runRiskWarning(){
-  const threshold = Number(warningThreshold.value || 75);
-  const hit = riskData.filter(r=>Number(r.riskScore || 0) >= threshold);
-  addAudit('风险模型', '预警扫描', `阈值=${threshold}，触发区域=${hit.map(x=>x.areaCode).join(',') || '无'}`);
-  alert(hit.length ? `预警触发区域：${hit.map(x=>x.areaCode).join('、')}` : '当前无区域触发预警');
-  renderAuditLogs();
-  loadRisk();
+async function runRiskWarning(){
+  try{
+    const data = await apiFetch('/admin/risk-warnings/scan', {method:'POST', body: JSON.stringify({})});
+    const hit = data.hitAreas || [];
+    const threshold = data.warningThreshold || Number(warningThreshold.value || 75);
+    alert(hit.length ? `阈值${threshold}，预警触发区域：${hit.map(x=>x.areaCode).join('、')}` : `阈值${threshold}，当前无区域触发预警`);
+    renderAuditLogs();
+    loadRisk();
+  }catch(e){ alert(e.message); }
 }
 
 function metrics(){

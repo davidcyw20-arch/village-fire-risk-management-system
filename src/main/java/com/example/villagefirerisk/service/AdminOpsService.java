@@ -18,6 +18,7 @@ public class AdminOpsService {
     private final KnowledgeArticleRepository knowledgeArticleRepository;
     private final HazardRepository hazardRepository;
     private final NotificationService notificationService;
+    private final RiskService riskService;
 
     public AdminOpsService(SystemConfigItemRepository systemConfigItemRepository,
                            DataDictionaryItemRepository dataDictionaryItemRepository,
@@ -25,7 +26,8 @@ public class AdminOpsService {
                            OperationLogRepository operationLogRepository,
                            KnowledgeArticleRepository knowledgeArticleRepository,
                            HazardRepository hazardRepository,
-                           NotificationService notificationService) {
+                           NotificationService notificationService,
+                           RiskService riskService) {
         this.systemConfigItemRepository = systemConfigItemRepository;
         this.dataDictionaryItemRepository = dataDictionaryItemRepository;
         this.pushRuleRepository = pushRuleRepository;
@@ -33,6 +35,7 @@ public class AdminOpsService {
         this.knowledgeArticleRepository = knowledgeArticleRepository;
         this.hazardRepository = hazardRepository;
         this.notificationService = notificationService;
+        this.riskService = riskService;
     }
 
     public List<Hazard> listHazardsForMonitor() {
@@ -50,6 +53,21 @@ public class AdminOpsService {
                 ? String.format("【隐患督办】请尽快处理隐患[%d-%s]，当前状态：%s，辖区：%s。", hazard.getId(), hazard.getTitle(), hazard.getStatus(), hazard.getAreaCode())
                 : customContent;
         return notificationService.mockSend(hazard.getAssignedTo().getId(), content);
+    }
+
+
+    public AdminConfigDtos.RiskWarningScanResponse scanRiskWarnings() {
+        int threshold = 75;
+        try {
+            threshold = Integer.parseInt(systemConfigItemRepository.findByConfigKey("warningThreshold")
+                    .map(SystemConfigItem::getConfigValue).orElse("75"));
+        } catch (Exception ignored) {}
+
+        List<com.example.villagefirerisk.dto.RiskAreaResponse> areas = riskService.calculateAreaRisk();
+        List<com.example.villagefirerisk.dto.RiskAreaResponse> hit = areas.stream()
+                .filter(x -> x.getRiskScore() >= threshold)
+                .toList();
+        return new AdminConfigDtos.RiskWarningScanResponse(threshold, hit);
     }
 
     public Map<String, String> getSystemConfig() {
