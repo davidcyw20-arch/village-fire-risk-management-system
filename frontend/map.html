@@ -5,8 +5,71 @@
 <section class="panel"><div class="toolbar"><span class="sub">点击地图获取坐标：</span><input id="lat" readonly placeholder="纬度" /><input id="lng" readonly placeholder="经度" /><button class="ghost" onclick="loadHazards()">刷新点位</button></div><div id="map"></div></section>
 </main></div>
 <script>
-const map=L.map('map').setView([31.2304,121.4737],13);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);let markerGroup=L.layerGroup().addTo(map);
-map.on('click',e=>{lat.value=e.latlng.lat.toFixed(7);lng.value=e.latlng.lng.toFixed(7);L.popup().setLatLng(e.latlng).setContent(`纬度:${lat.value}<br>经度:${lng.value}`).openOn(map);});
-async function loadHazards(){try{const hazards=await apiFetch('/hazards');m1.textContent=hazards.length;m2.textContent=hazards.filter(h=>h.status==='REPORTED'||h.status==='ASSIGNED').length;m3.textContent=hazards.filter(h=>h.status==='IN_PROGRESS').length;m4.textContent=hazards.filter(h=>h.status==='RESOLVED').length;markerGroup.clearLayers();hazards.forEach(h=>{if(h.latitude&&h.longitude){L.marker([Number(h.latitude),Number(h.longitude)]).addTo(markerGroup).bindPopup(`<b>${h.title}</b><br/>类型:${toHazardTypeLabel(h.hazardType)}<br/>状态:${toHazardStatusLabel(h.status)}<br/>地址:${h.address}`);}});}catch(e){alert(e.message)}}
+const map = L.map('map').setView([31.2304,121.4737], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20}).addTo(map);
+let markerGroup = L.layerGroup().addTo(map);
+
+const statusColor = {
+  REPORTED: '#f59e0b',
+  ASSIGNED: '#f97316',
+  IN_PROGRESS: '#3b82f6',
+  RESOLVED: '#10b981',
+  REJECTED: '#ef4444'
+};
+
+const typeEmoji = {
+  BLOCKED_EXIT:'🚧',
+  GAS_LEAK:'⛽',
+  ELECTRICAL:'⚡',
+  FIRE_FACILITY_DAMAGE:'🧯',
+  ILLEGAL_STORAGE:'🛢️'
+};
+
+map.on('click', e => {
+  lat.value = e.latlng.lat.toFixed(7);
+  lng.value = e.latlng.lng.toFixed(7);
+  L.popup().setLatLng(e.latlng).setContent(`纬度:${lat.value}<br>经度:${lng.value}`).openOn(map);
+});
+
+function markerStyle(status){
+  const c = statusColor[status] || '#6b7280';
+  return {radius: 9, color: '#ffffff', weight: 2, fillColor: c, fillOpacity: 0.95};
+}
+
+async function loadHazards(){
+  try{
+    const hazards = await apiFetch('/hazards');
+    m1.textContent = hazards.length;
+    m2.textContent = hazards.filter(h=>h.status==='REPORTED'||h.status==='ASSIGNED').length;
+    m3.textContent = hazards.filter(h=>h.status==='IN_PROGRESS').length;
+    m4.textContent = hazards.filter(h=>h.status==='RESOLVED').length;
+
+    markerGroup.clearLayers();
+    const pts = [];
+
+    hazards.forEach(h=>{
+      if(h.latitude && h.longitude){
+        const latNum = Number(h.latitude);
+        const lngNum = Number(h.longitude);
+        pts.push([latNum, lngNum]);
+        const em = typeEmoji[h.hazardType] || '📍';
+        const popup = `<b>${em} ${h.title}</b><br/>`
+          + `类型：${toHazardTypeLabel(h.hazardType)}<br/>`
+          + `状态：${toHazardStatusLabel(h.status)}<br/>`
+          + `坐标：${latNum.toFixed(7)}, ${lngNum.toFixed(7)}<br/>`
+          + `地址：${h.address}`;
+
+        L.circleMarker([latNum, lngNum], markerStyle(h.status))
+          .addTo(markerGroup)
+          .bindPopup(popup);
+      }
+    });
+
+    if(pts.length){
+      map.fitBounds(pts, {padding:[30,30], maxZoom:18});
+    }
+  }catch(e){alert(e.message)}
+}
+
 loadHazards();
 </script></body></html>

@@ -228,12 +228,16 @@ async function loadKnowledge(){
   try{
     const riskLevel = currentRiskLevel();
     const list = await apiFetch(`/knowledge/recommend?role=RESIDENT&riskLevel=${riskLevel}`);
+    if(!list.length){
+      tbodyKnowledge.innerHTML = `<tr><td colspan="4">暂无匹配推荐，请先完善隐患上报信息</td></tr>`;
+      return;
+    }
     tbodyKnowledge.innerHTML = list.map(x=>`
       <tr>
         <td>${x.title}</td>
-        <td>居民</td>
-        <td>${toRiskLevelLabel(x.riskLevel)}</td>
-        <td>${(x.content || '').slice(0,80)}...</td>
+        <td>${x.targetRole==='ALL'?'全角色':'居民'}</td>
+        <td>${toRiskLevelLabel(x.targetRiskLevel)}</td>
+        <td>${(x.content || '').slice(0,80)}${(x.content||'').length>80?'...':''}</td>
       </tr>`).join('');
   }catch(e){
     tbodyKnowledge.innerHTML = `<tr><td colspan="4">推荐加载失败：${e.message}</td></tr>`;
