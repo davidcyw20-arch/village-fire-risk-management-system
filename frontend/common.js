@@ -30,7 +30,7 @@ async function apiFetch(path, options = {}) {
   if (response.status === 401) {
     alert('登录已过期，请重新登录');
     location.href = './login.html';
-    throw new Error('Unauthorized');
+    throw new Error('未授权');
   }
 
   const contentType = response.headers.get('content-type') || '';
