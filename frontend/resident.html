@@ -48,14 +48,8 @@
       <h3>消防隐患上报 <span class="badge">拍照/描述/定位</span></h3>
       <div class="grid">
         <input id="title" placeholder="标题" />
-        <input id="hazardType" list="hazardTypeSuggestions" placeholder="隐患类型（可自定义输入）" />
-        <datalist id="hazardTypeSuggestions">
-          <option value="BLOCKED_EXIT">消防通道堵塞</option>
-          <option value="GAS_LEAK">燃气泄漏风险</option>
-          <option value="ELECTRICAL">电气隐患</option>
-          <option value="FIRE_FACILITY_DAMAGE">消防设施损坏</option>
-          <option value="ILLEGAL_STORAGE">违规存放易燃物</option>
-        </datalist>
+        <input id="hazardType" list="hazardTypeSuggestions" placeholder="隐患类型（支持自定义，也可从字典建议中选）" />
+        <datalist id="hazardTypeSuggestions"></datalist>
 
         <input id="areaCode" placeholder="区域编码，如 A001" />
         <input id="address" placeholder="详细地址" />
@@ -130,7 +124,6 @@ let page = 1;
 const pageSize = 5;
 
 const me = getCurrentUser();
-hazardType.value = 'BLOCKED_EXIT';
 
 function fmtTime(v){ return v ? String(v).replace('T',' ') : '-'; }
 
@@ -167,6 +160,34 @@ function currentRiskLevel(){
   const src = unresolved.length ? unresolved : mine;
   const rank = {LOW:1, MID:2, HIGH:3, CRITICAL:4};
   return src.reduce((best, x) => rank[x.severity] > rank[best] ? x.severity : best, 'LOW');
+}
+
+function buildDefaultHazardTypeSuggestions(){
+  return [
+    { value: '消防通道堵塞' },
+    { value: '燃气泄漏风险' },
+    { value: '电气隐患' },
+    { value: '消防设施损坏' },
+    { value: '违规存放易燃物' }
+  ];
+}
+
+async function loadHazardTypeSuggestions(){
+  let items = [];
+  try{
+    items = await apiFetch('/dictionaries/items?dictType=' + encodeURIComponent('隐患类型'));
+  }catch(e){
+    items = [];
+  }
+  const list = (items && items.length ? items : buildDefaultHazardTypeSuggestions())
+    .map(x => (x.dictValue || x.value || '').trim())
+    .filter(Boolean);
+
+  hazardTypeSuggestions.innerHTML = list.map(v => `<option value="${v}"></option>`).join('');
+
+  if(!hazardType.value && list.length){
+    hazardType.placeholder = `示例：${list[0]}`;
+  }
 }
 
 async function reportHazard(){
@@ -268,6 +289,7 @@ function fillCurrentLocation(){
 }
 
 loadProfile();
+loadHazardTypeSuggestions();
 loadHazards();
 </script>
 </body>
