@@ -14,6 +14,6 @@ function renderHazards(){const p=paginate(allHazards,page,pageSize);page=p.curre
 function changePage(d){page+=d;renderHazards();}
 async function loadRisk(){try{riskData=await apiFetch('/risk/areas');tbodyRisk.innerHTML=riskData.map(r=>`<tr><td>${r.areaCode}</td><td>${r.riskScore}</td><td>${r.riskLevel}</td></tr>`).join('');metrics();}catch(e){alert(e.message)}}
 function metrics(){a1.textContent=allHazards.length;a2.textContent=allHazards.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED'||x.status==='IN_PROGRESS').length;a3.textContent=allHazards.filter(x=>x.status==='RESOLVED').length;a4.textContent=riskData.filter(r=>r.riskLevel==='HIGH'||r.riskLevel==='CRITICAL').length;}
-async function exportExcel(){const resp=await fetch('http://localhost:8080/api/v1/reports/hazards/export',{headers:{Authorization:'Bearer '+getToken()}});if(!resp.ok){alert('导出失败');return;}const blob=await resp.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='hazards.xlsx';a.click();URL.revokeObjectURL(url);} 
+async function exportExcel(){try{const resp=await fetch(`${API_BASE}/reports/hazards/export`,{headers:{Authorization:'Bearer '+getToken()}});if(!resp.ok){alert('导出失败');return;}const blob=await resp.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='hazards.xlsx';a.click();URL.revokeObjectURL(url);}catch(e){alert(`导出失败：${e.message}`);}} 
 loadHazards();loadRisk();
 </script></body></html>
