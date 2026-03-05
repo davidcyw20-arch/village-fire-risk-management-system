@@ -1,6 +1,18 @@
 const API_BASE = localStorage.getItem('apiBase') || 'http://localhost:8080/api/v1';
 const TOKEN_KEY = 'token';
 
+function resolveFileUrl(url) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('//')) return `${location.protocol}${url}`;
+  try {
+    const apiOrigin = new URL(API_BASE).origin;
+    return `${apiOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+  } catch (e) {
+    return url;
+  }
+}
+
 function getToken() {
   return localStorage.getItem(TOKEN_KEY) || '';
 }
@@ -141,5 +153,5 @@ async function uploadImageFile(file) {
   if (!response.ok || data.code !== 0) {
     throw new Error(data.message || '图片上传失败');
   }
-  return data.data.url;
+  return resolveFileUrl(data.data.url);
 }

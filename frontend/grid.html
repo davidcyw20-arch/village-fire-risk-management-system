@@ -80,11 +80,18 @@
         <input id="patrolDate" type="date" />
         <input id="patrolArea" placeholder="巡查区域" />
         <input id="patrolResult" placeholder="巡查记录/发现情况" style="flex:1;min-width:240px" />
+        <select id="patrolNeedPhoto" onchange="togglePatrolPhotoFields()">
+          <option value="NO">本次不上传照片</option>
+          <option value="YES">本次上传照片</option>
+        </select>
+        <input id="patrolImageFile" type="file" accept="image/*" style="display:none" />
+        <button id="patrolUploadBtn" class="ghost" style="display:none" onclick="uploadPatrolPhoto()">上传巡查照片</button>
         <button onclick="addPatrolRecord()">新增巡查记录</button>
       </div>
+      <div id="patrolPhotoHint" class="sub" style="margin-top:8px;display:none">巡查照片地址：<span id="patrolImageUrl">未上传</span></div>
       <div class="table-wrap" style="margin-top:8px">
         <table>
-          <thead><tr><th>日期</th><th>区域</th><th>记录</th><th>操作</th></tr></thead>
+          <thead><tr><th>日期</th><th>区域</th><th>记录</th><th>是否上传照片</th><th>照片</th><th>操作</th></tr></thead>
           <tbody id="tbodyPatrol"></tbody>
         </table>
       </div>
@@ -127,6 +134,7 @@ let mine = [];
 let page = 1;
 const pageSize = 5;
 let processPhotoUrl = '';
+let patrolPhotoUrl = '';
 
 const areaCode = (localStorage.getItem(`grid_area_${me.username}`) || 'A001').toUpperCase();
 localStorage.setItem(`grid_area_${me.username}`, areaCode);
@@ -147,8 +155,33 @@ function ensureGridRole(){
 
 function fmtTime(v){ return v ? String(v).replace('T',' ') : '-'; }
 function photoCell(url){
-  if(!url) return '<span class="sub">无</span>';
-  return `<a class="link" href="${url}" target="_blank"><img src="${url}" alt="照片" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid rgba(148,163,184,.45)"/></a>`;
+  const fullUrl = resolveFileUrl(url);
+  if(!fullUrl) return '<span class="sub">无</span>';
+  return `<a class="link" href="${fullUrl}" target="_blank"><img src="${fullUrl}" alt="照片" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid rgba(148,163,184,.45)"/></a>`;
+}
+
+function togglePatrolPhotoFields(){
+  const show = patrolNeedPhoto.value === 'YES';
+  patrolImageFile.style.display = show ? '' : 'none';
+  patrolUploadBtn.style.display = show ? '' : 'none';
+  patrolPhotoHint.style.display = show ? '' : 'none';
+  if(!show){
+    patrolPhotoUrl = '';
+    patrolImageFile.value = '';
+    patrolImageUrl.textContent = '未上传';
+  }
+}
+
+async function uploadPatrolPhoto(){
+  try{
+    if(!patrolImageFile.files || !patrolImageFile.files.length){
+      alert('请先选择巡查照片');
+      return;
+    }
+    patrolPhotoUrl = await uploadImageFile(patrolImageFile.files[0]);
+    patrolImageUrl.textContent = patrolPhotoUrl;
+    alert('巡查照片上传成功');
+  }catch(e){alert(e.message)}
 }
 
 async function uploadProcessPhoto(){
@@ -229,10 +262,26 @@ function addPatrolRecord(){
     alert('请填写完整巡查信息');
     return;
   }
+  if(patrolNeedPhoto.value === 'YES' && !patrolPhotoUrl){
+    alert('已选择上传照片，请先上传巡查照片');
+    return;
+  }
   const list = readArr(patrolKey());
-  list.unshift({id: Date.now(), date: patrolDate.value, area: patrolArea.value, result: patrolResult.value});
+  list.unshift({
+    id: Date.now(),
+    date: patrolDate.value,
+    area: patrolArea.value,
+    result: patrolResult.value,
+    hasPhoto: patrolNeedPhoto.value === 'YES',
+    photoUrl: patrolPhotoUrl
+  });
   writeArr(patrolKey(), list);
   patrolArea.value=''; patrolResult.value='';
+  patrolNeedPhoto.value = 'NO';
+  patrolPhotoUrl = '';
+  patrolImageFile.value = '';
+  patrolImageUrl.textContent = '未上传';
+  togglePatrolPhotoFields();
   renderPatrol();
 }
 
@@ -246,6 +295,8 @@ function renderPatrol(){
   const list = readArr(patrolKey());
   tbodyPatrol.innerHTML = list.map(x=>`<tr>
     <td>${x.date}</td><td>${x.area}</td><td>${x.result}</td>
+    <td>${x.hasPhoto ? '是' : '否'}</td>
+    <td>${photoCell(x.photoUrl)}</td>
     <td><button class='ghost' onclick='delPatrol(${x.id})'>删除</button></td>
   </tr>`).join('');
 }
@@ -286,6 +337,7 @@ ensureGridRole();
 loadData();
 renderPatrol();
 renderAreaInfo();
+togglePatrolPhotoFields();
 </script>
 </body>
 </html>
