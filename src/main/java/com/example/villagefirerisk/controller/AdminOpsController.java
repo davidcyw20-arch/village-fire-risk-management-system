@@ -26,6 +26,19 @@ public class AdminOpsController {
         this.adminOpsService = adminOpsService;
     }
 
+    @GetMapping("/hazards/monitor")
+    public ApiResponse<List<com.example.villagefirerisk.entity.Hazard>> listHazardsForMonitor() {
+        return ApiResponse.success(adminOpsService.listHazardsForMonitor());
+    }
+
+    @PostMapping("/hazards/{id}/urge")
+    @OperationLoggable(module = "AdminHazard", operation = "Urge Hazard")
+    public ApiResponse<com.example.villagefirerisk.entity.NotificationLog> urgeHazard(@PathVariable Long id,
+                                                                                       @RequestBody(required = false) AdminConfigDtos.UrgeRequest request) {
+        String content = request == null ? null : request.getContent();
+        return ApiResponse.success(adminOpsService.urgeHazard(id, content));
+    }
+
     @GetMapping("/system-config")
     public ApiResponse<Map<String, String>> getSystemConfig() {
         return ApiResponse.success(adminOpsService.getSystemConfig());

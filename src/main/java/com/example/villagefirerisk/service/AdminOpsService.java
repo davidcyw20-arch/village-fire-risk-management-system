@@ -16,17 +16,40 @@ public class AdminOpsService {
     private final PushRuleRepository pushRuleRepository;
     private final OperationLogRepository operationLogRepository;
     private final KnowledgeArticleRepository knowledgeArticleRepository;
+    private final HazardRepository hazardRepository;
+    private final NotificationService notificationService;
 
     public AdminOpsService(SystemConfigItemRepository systemConfigItemRepository,
                            DataDictionaryItemRepository dataDictionaryItemRepository,
                            PushRuleRepository pushRuleRepository,
                            OperationLogRepository operationLogRepository,
-                           KnowledgeArticleRepository knowledgeArticleRepository) {
+                           KnowledgeArticleRepository knowledgeArticleRepository,
+                           HazardRepository hazardRepository,
+                           NotificationService notificationService) {
         this.systemConfigItemRepository = systemConfigItemRepository;
         this.dataDictionaryItemRepository = dataDictionaryItemRepository;
         this.pushRuleRepository = pushRuleRepository;
         this.operationLogRepository = operationLogRepository;
         this.knowledgeArticleRepository = knowledgeArticleRepository;
+        this.hazardRepository = hazardRepository;
+        this.notificationService = notificationService;
+    }
+
+    public List<Hazard> listHazardsForMonitor() {
+        List<Hazard> hazards = hazardRepository.findAll();
+        hazards.sort(Comparator.comparing(Hazard::getId).reversed());
+        return hazards;
+    }
+
+    public NotificationLog urgeHazard(Long hazardId, String customContent) {
+        Hazard hazard = hazardRepository.findById(hazardId).orElseThrow(() -> new BusinessException("隐患不存在"));
+        if (hazard.getAssignedTo() == null) {
+            throw new BusinessException("该隐患尚未分派网格员，无法督办");
+        }
+        String content = (customContent == null || customContent.isBlank())
+                ? String.format("【隐患督办】请尽快处理隐患[%d-%s]，当前状态：%s，辖区：%s。", hazard.getId(), hazard.getTitle(), hazard.getStatus(), hazard.getAreaCode())
+                : customContent;
+        return notificationService.mockSend(hazard.getAssignedTo().getId(), content);
     }
 
     public Map<String, String> getSystemConfig() {
@@ -102,7 +125,6 @@ public class AdminOpsService {
                 Objects.toString(x.getUsername(), "")).toLowerCase().contains(k)
         ).toList();
     }
-
 
     public void clearAuditLogs() {
         operationLogRepository.deleteAllInBatch();

@@ -282,14 +282,16 @@ async function assignHazard(){
 
 async function urgeHazard(){
   if(!hazardId.value) return alert('请先输入隐患编号');
-  addAudit('隐患流程', '督办提醒', `对隐患${hazardId.value}发起督办`);
-  alert(`已对隐患 ${hazardId.value} 发起督办提醒（示意）`);
-  renderAuditLogs();
+  try{
+    await apiFetch(`/admin/hazards/${hazardId.value}/urge`, {method:'POST', body: JSON.stringify({})});
+    alert(`已对隐患 ${hazardId.value} 发起督办提醒`);
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
 }
 
 async function loadHazards(){
   try{
-    allHazards = await apiFetch('/hazards');
+    allHazards = await apiFetch('/admin/hazards/monitor');
     renderHazards();
     metrics();
     refreshDashboard();
