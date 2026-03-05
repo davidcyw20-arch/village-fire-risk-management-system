@@ -133,6 +133,23 @@ public class AdminConfigDtos {
         public void setHitAreas(List<com.example.villagefirerisk.dto.RiskAreaResponse> hitAreas) { this.hitAreas = hitAreas; }
     }
 
+
+
+    public static class HazardRefreshNoticeResponse {
+        private Integer hazardCount;
+        private Integer notifiedGridCount;
+
+        public HazardRefreshNoticeResponse(Integer hazardCount, Integer notifiedGridCount) {
+            this.hazardCount = hazardCount;
+            this.notifiedGridCount = notifiedGridCount;
+        }
+
+        public Integer getHazardCount() { return hazardCount; }
+        public void setHazardCount(Integer hazardCount) { this.hazardCount = hazardCount; }
+        public Integer getNotifiedGridCount() { return notifiedGridCount; }
+        public void setNotifiedGridCount(Integer notifiedGridCount) { this.notifiedGridCount = notifiedGridCount; }
+    }
+
     public static class ValueResponse {
         private String key;
         private String value;

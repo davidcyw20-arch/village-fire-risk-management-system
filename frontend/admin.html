@@ -88,7 +88,7 @@
         <input id="gridUserId" placeholder="网格员编号" />
         <button onclick="assignHazard()">分派 / 重分配</button>
         <button class="ghost" onclick="urgeHazard()">督办提醒</button>
-        <button class="ghost" onclick="loadHazards()">刷新隐患</button>
+        <button class="ghost" onclick="loadHazards(true)">刷新隐患</button>
       </div>
       <div class="table-wrap" style="margin-top:8px">
         <table>
@@ -289,9 +289,13 @@ async function urgeHazard(){
   }catch(e){ alert(e.message); }
 }
 
-async function loadHazards(){
+async function loadHazards(withNotify = false){
   try{
     allHazards = await apiFetch('/admin/hazards/monitor');
+    if(withNotify){
+      const noticeResult = await apiFetch('/admin/hazards/refresh-notify', {method:'POST', body: JSON.stringify({})});
+      alert(`已刷新 ${noticeResult.hazardCount || allHazards.length} 条隐患，并通知 ${noticeResult.notifiedGridCount || 0} 名网格员`);
+    }
     renderHazards();
     metrics();
     refreshDashboard();

@@ -39,6 +39,14 @@ public class AdminOpsController {
         return ApiResponse.success(adminOpsService.urgeHazard(id, content));
     }
 
+
+
+    @PostMapping("/hazards/refresh-notify")
+    @OperationLoggable(module = "AdminHazard", operation = "Refresh Hazards And Notify Grids")
+    public ApiResponse<AdminConfigDtos.HazardRefreshNoticeResponse> refreshHazardsAndNotifyGrids() {
+        return ApiResponse.success(adminOpsService.refreshHazardsAndNotifyGrids());
+    }
+
     @GetMapping("/system-config")
     public ApiResponse<Map<String, String>> getSystemConfig() {
         return ApiResponse.success(adminOpsService.getSystemConfig());

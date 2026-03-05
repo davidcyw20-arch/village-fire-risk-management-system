@@ -56,6 +56,21 @@ public class AdminOpsService {
     }
 
 
+
+
+    public AdminConfigDtos.HazardRefreshNoticeResponse refreshHazardsAndNotifyGrids() {
+        List<Hazard> hazards = listHazardsForMonitor();
+        Set<Long> gridUserIds = hazards.stream()
+                .filter(h -> h.getAssignedTo() != null)
+                .filter(h -> h.getStatus() != HazardStatus.RESOLVED && h.getStatus() != HazardStatus.REJECTED)
+                .map(h -> h.getAssignedTo().getId())
+                .collect(java.util.stream.Collectors.toSet());
+        gridUserIds.forEach(gridUserId ->
+                notificationService.mockSend(gridUserId, "【隐患更新】管理员已刷新隐患列表，请及时查看最新分派/重分配与督办提醒。")
+        );
+        return new AdminConfigDtos.HazardRefreshNoticeResponse(hazards.size(), gridUserIds.size());
+    }
+
     public AdminConfigDtos.RiskWarningScanResponse scanRiskWarnings() {
         int threshold = 75;
         try {

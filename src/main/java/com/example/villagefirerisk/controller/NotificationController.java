@@ -34,4 +34,10 @@ public class NotificationController {
     public ApiResponse<List<NotificationLog>> list() {
         return ApiResponse.success(notificationService.list());
     }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasAnyRole('GRID','ADMIN')")
+    public ApiResponse<List<NotificationLog>> listMy() {
+        return ApiResponse.success(notificationService.listMy());
+    }
 }

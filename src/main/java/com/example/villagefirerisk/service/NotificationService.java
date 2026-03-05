@@ -7,6 +7,7 @@ import com.example.villagefirerisk.entity.User;
 import com.example.villagefirerisk.repository.NotificationLogRepository;
 import com.example.villagefirerisk.repository.UserRepository;
 import com.example.villagefirerisk.util.BusinessException;
+import com.example.villagefirerisk.util.SecurityUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -40,5 +41,13 @@ public class NotificationService {
 
     public List<NotificationLog> list() {
         return notificationLogRepository.findAll();
+    }
+
+    public List<NotificationLog> listMy() {
+        String username = SecurityUtil.getCurrentUsername();
+        if (username == null || username.isBlank()) {
+            throw new BusinessException("未登录");
+        }
+        return notificationLogRepository.findByUserUsernameOrderByIdDesc(username);
     }
 }

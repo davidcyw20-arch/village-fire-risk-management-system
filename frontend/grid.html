@@ -42,6 +42,21 @@
       </div>
     </section>
 
+
+    <section class="panel">
+      <h3>督办/分派消息反馈</h3>
+      <div class="toolbar">
+        <span class="badge">最新消息数：<b id="noticeCount">0</b></span>
+        <button class="ghost" onclick="loadMyNotifications(false)">刷新消息</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>时间</th><th>类型</th><th>内容</th></tr></thead>
+          <tbody id="tbodyNotice"></tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="panel">
       <h3>辖区任务列表</h3>
       <div class="table-wrap">
@@ -138,6 +153,8 @@ let page = 1;
 const pageSize = 5;
 let processPhotoUrl = '';
 let patrolPhotoUrl = '';
+let notifications = [];
+let latestNoticeId = Number(localStorage.getItem(`grid_latest_notice_${me.username}`) || 0);
 
 const areaCode = (localStorage.getItem(`grid_area_${me.username}`) || 'A001').toUpperCase();
 localStorage.setItem(`grid_area_${me.username}`, areaCode);
@@ -214,6 +231,29 @@ async function processHazard(){
     processImageFile.value = '';
     loadData();
   }catch(e){alert(e.message)}
+}
+
+
+async function loadMyNotifications(showTips = true){
+  try{
+    notifications = await apiFetch('/notifications/my');
+    noticeCount.textContent = notifications.length;
+    tbodyNotice.innerHTML = notifications.slice(0, 10).map(x=>`<tr>
+      <td>${fmtTime(x.sentAt)}</td>
+      <td>${x.bizType || '-'}</td>
+      <td>${x.content || '-'}</td>
+    </tr>`).join('');
+
+    const maxId = notifications.length ? Math.max(...notifications.map(x => Number(x.id || 0))) : latestNoticeId;
+    const newCount = notifications.filter(x => Number(x.id || 0) > latestNoticeId).length;
+    if(showTips && newCount > 0){
+      alert(`您有 ${newCount} 条新的分派/督办消息，请及时处理。`);
+    }
+    latestNoticeId = Math.max(latestNoticeId, maxId || 0);
+    localStorage.setItem(`grid_latest_notice_${me.username}`, String(latestNoticeId));
+  }catch(e){
+    tbodyNotice.innerHTML = '';
+  }
 }
 
 async function loadData(){
@@ -344,6 +384,8 @@ function renderAreaInfo(){
 
 ensureGridRole();
 loadData();
+loadMyNotifications(false);
+setInterval(() => { loadData(); loadMyNotifications(true); }, 15000);
 renderPatrol();
 renderAreaInfo();
 togglePatrolPhotoFields();
