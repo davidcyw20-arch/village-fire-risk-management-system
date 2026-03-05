@@ -60,6 +60,11 @@ mysql -uroot -p < init.sql
 
 如本地账号密码不同，请自行修改。
 
+
+> 如果你之前已运行过旧版本数据库脚本，升级后出现类似 `missing table [data_dictionary_items]` 的错误：
+> - 方案A（推荐开发阶段）：保持 `ddl-auto=update`，重新启动自动补齐表结构。
+> - 方案B（全量重建）：重新执行 `mysql -uroot -p < init.sql`。
+
 ---
 
 ## 3. application.yml 配置说明
@@ -72,7 +77,7 @@ mysql -uroot -p < init.sql
 ### 3.2 数据源配置
 - `spring.datasource.url`：MySQL 连接串
 - `spring.datasource.username/password`：数据库账号密码
-- `spring.jpa.hibernate.ddl-auto=validate`：按现有表结构校验
+- `spring.jpa.hibernate.ddl-auto=update`：开发环境自动补齐新增表/字段（避免升级后因缺表启动失败）
 
 ### 3.3 文件上传配置
 - `spring.servlet.multipart.max-file-size=10MB`
