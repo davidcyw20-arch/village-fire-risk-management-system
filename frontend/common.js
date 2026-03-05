@@ -106,3 +106,25 @@ function getCurrentUser() {
     role: p.role || '',
   };
 }
+
+
+async function uploadImageFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE}/files/upload`, { method: 'POST', headers, body: formData });
+  } catch (e) {
+    throw new Error('图片上传失败：网络连接异常');
+  }
+
+  const data = await response.json();
+  if (!response.ok || data.code !== 0) {
+    throw new Error(data.message || '图片上传失败');
+  }
+  return data.data.url;
+}

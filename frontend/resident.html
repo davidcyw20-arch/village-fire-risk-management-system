@@ -62,7 +62,10 @@
         <input id="latitude" placeholder="纬度" />
         <input id="longitude" placeholder="经度" />
 
-        <input id="imageUrl" placeholder="隐患照片地址（可先上传）" style="grid-column:1/-1" />
+        <input id="imageUrl" placeholder="隐患照片地址（上传后自动填充）" style="grid-column:1/-1" />
+
+        <input id="imageFile" type="file" accept="image/*" />
+        <button class="ghost" onclick="uploadHazardImage()">上传照片</button>
 
         <select id="severity">
           <option value="LOW">低风险</option>
@@ -233,6 +236,18 @@ async function loadKnowledge(){
   }catch(e){
     tbodyKnowledge.innerHTML = `<tr><td colspan="4">推荐加载失败：${e.message}</td></tr>`;
   }
+}
+
+async function uploadHazardImage(){
+  try{
+    if(!imageFile.files || !imageFile.files.length){
+      alert('请先选择照片文件');
+      return;
+    }
+    const url = await uploadImageFile(imageFile.files[0]);
+    imageUrl.value = url;
+    alert('照片上传成功，已自动填充图片地址');
+  }catch(e){alert(e.message)}
 }
 
 function fillCurrentLocation(){
