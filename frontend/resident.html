@@ -48,13 +48,14 @@
       <h3>消防隐患上报 <span class="badge">拍照/描述/定位</span></h3>
       <div class="grid">
         <input id="title" placeholder="标题" />
-        <select id="hazardType">
+        <input id="hazardType" list="hazardTypeSuggestions" placeholder="隐患类型（可自定义输入）" />
+        <datalist id="hazardTypeSuggestions">
           <option value="BLOCKED_EXIT">消防通道堵塞</option>
           <option value="GAS_LEAK">燃气泄漏风险</option>
           <option value="ELECTRICAL">电气隐患</option>
           <option value="FIRE_FACILITY_DAMAGE">消防设施损坏</option>
           <option value="ILLEGAL_STORAGE">违规存放易燃物</option>
-        </select>
+        </datalist>
 
         <input id="areaCode" placeholder="区域编码，如 A001" />
         <input id="address" placeholder="详细地址" />
@@ -129,6 +130,7 @@ let page = 1;
 const pageSize = 5;
 
 const me = getCurrentUser();
+hazardType.value = 'BLOCKED_EXIT';
 
 function fmtTime(v){ return v ? String(v).replace('T',' ') : '-'; }
 
