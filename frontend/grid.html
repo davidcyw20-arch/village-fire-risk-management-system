@@ -117,6 +117,9 @@
           </div>
         </div>
       </div>
+      <div class="toolbar" style="margin-top:10px">
+        <input id="areaInfoKeyword" placeholder="搜索建筑/居民（按类型、名称、详情）" style="flex:1;min-width:260px" oninput="renderAreaInfo()" />
+      </div>
       <div class="table-wrap" style="margin-top:10px">
         <table>
           <thead><tr><th>类型</th><th>名称</th><th>详情</th><th>操作</th></tr></thead>
@@ -327,7 +330,13 @@ function delAreaInfo(id){
 
 function renderAreaInfo(){
   const list = readArr(areaInfoKey());
-  tbodyAreaInfo.innerHTML = list.map(x=>`<tr>
+  const keyword = (areaInfoKeyword.value || '').trim().toLowerCase();
+  const filtered = !keyword ? list : list.filter(x =>
+    String(x.type || '').toLowerCase().includes(keyword) ||
+    String(x.name || '').toLowerCase().includes(keyword) ||
+    String(x.detail || '').toLowerCase().includes(keyword)
+  );
+  tbodyAreaInfo.innerHTML = filtered.map(x=>`<tr>
     <td>${x.type}</td><td>${x.name}</td><td>${x.detail}</td>
     <td><button class='ghost' onclick='delAreaInfo(${x.id})'>删除</button></td>
   </tr>`).join('');
