@@ -1,19 +1,490 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>管理员端</title><link rel="stylesheet" href="./styles.css" /><script src="./common.js?v=20260305"></script></head>
-<body><div class="app"><aside class="sidebar"><div class="brand">系统管理员端</div><nav class="menu"><a class="active" href="#">流程监控</a><a href="./map.html">风险地图</a><a href="./login.html">返回登录</a></nav></aside>
-<main class="main"><div class="topbar"><div><div class="title">系统管理驾驶舱</div><div class="sub">用户管理、流程督办、风险模型、知识库与日志审计</div></div><button class="danger" onclick="clearToken();location.href='./login.html'">退出</button></div>
-<section class="cards"><div class="card"><h4>全量隐患</h4><div id="a1" class="metric">-</div></div><div class="card"><h4>待分派/处理中</h4><div id="a2" class="metric">-</div></div><div class="card"><h4>已解决</h4><div id="a3" class="metric">-</div></div><div class="card"><h4>高风险区域数</h4><div id="a4" class="metric">-</div></div></section>
-<section class="panel"><h3>隐患流程监控与督办</h3><div class="toolbar"><input id="hazardId" placeholder="隐患编号" /><input id="gridUserId" placeholder="网格员编号" /><button onclick="assignHazard()">分派任务</button><button class="ghost" onclick="loadRisk()">刷新风险</button><button class="ghost" onclick="exportExcel()">导出报表</button></div></section>
-<section class="panel"><h3>隐患总览</h3><div class="table-wrap"><table><thead><tr><th>编号</th><th>标题</th><th>状态</th><th>区域</th><th>处理网格员</th></tr></thead><tbody id="tbodyHazards"></tbody></table></div><div class="pagebar"><button class="ghost" onclick="changePage(-1)">上一页</button><span id="pageInfo"></span><button class="ghost" onclick="changePage(1)">下一页</button></div></section>
-<section class="panel"><h3>区域风险评估</h3><div class="table-wrap"><table><thead><tr><th>区域编码</th><th>风险分值</th><th>风险等级</th></tr></thead><tbody id="tbodyRisk"></tbody></table></div></section>
-</main></div>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>管理员端</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./common.js?v=20260305"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">系统管理员端</div>
+    <nav class="menu">
+      <a class="active" href="#">管理驾驶舱</a>
+      <a href="./map.html">风险地图</a>
+      <a href="./login.html">返回登录</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="title">系统管理驾驶舱</div>
+        <div class="sub">系统配置、用户管理、隐患督办、风险模型、知识管理、分析报表、日志审计</div>
+      </div>
+      <button class="danger" onclick="clearToken();location.href='./login.html'">退出</button>
+    </div>
+
+    <section class="cards">
+      <div class="card"><h4>全量隐患</h4><div id="a1" class="metric">-</div></div>
+      <div class="card"><h4>待分派/处理中</h4><div id="a2" class="metric">-</div></div>
+      <div class="card"><h4>已解决</h4><div id="a3" class="metric">-</div></div>
+      <div class="card"><h4>高风险区域数</h4><div id="a4" class="metric">-</div></div>
+    </section>
+
+    <section class="panel">
+      <h3>① 系统配置管理</h3>
+      <div class="toolbar">
+        <input id="cfgApiBase" placeholder="系统API地址" style="min-width:280px" />
+        <input id="cfgDefaultArea" placeholder="默认辖区编码（如A001）" />
+        <select id="cfgRolePolicy">
+          <option value="STRICT">权限分配策略：严格</option>
+          <option value="RELAXED">权限分配策略：宽松</option>
+        </select>
+        <button onclick="saveSystemConfig()">保存配置</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <input id="dictType" placeholder="数据字典类型（如：隐患类型）" />
+        <input id="dictValue" placeholder="数据字典值（如：飞线充电）" style="flex:1" />
+        <button class="ghost" onclick="addDictItem()">新增字典项</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>字典类型</th><th>字典值</th><th>操作</th></tr></thead>
+          <tbody id="tbodyDict"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>② 用户综合管理（居民/网格员）</h3>
+      <div class="toolbar">
+        <input id="userKeyword" placeholder="搜索用户（用户名/角色）" oninput="renderUsers()" style="flex:1;min-width:260px" />
+        <select id="newUserRole">
+          <option value="RESIDENT">居民</option>
+          <option value="GRID">网格员</option>
+          <option value="ADMIN">管理员</option>
+        </select>
+        <input id="newUsername" placeholder="新增用户名" />
+        <button class="ghost" onclick="addManagedUser()">新增用户档案</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>用户名</th><th>角色</th><th>状态</th><th>来源</th><th>操作</th></tr></thead>
+          <tbody id="tbodyUsers"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>③ 隐患流程监控（督办与重分配）</h3>
+      <div class="toolbar">
+        <input id="hazardId" placeholder="隐患编号" />
+        <input id="gridUserId" placeholder="网格员编号" />
+        <button onclick="assignHazard()">分派 / 重分配</button>
+        <button class="ghost" onclick="urgeHazard()">督办提醒</button>
+        <button class="ghost" onclick="loadHazards()">刷新隐患</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>编号</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th><th>处理网格员</th><th>上报人</th></tr></thead>
+          <tbody id="tbodyHazards"></tbody>
+        </table>
+      </div>
+      <div class="pagebar">
+        <button class="ghost" onclick="changePage(-1)">上一页</button>
+        <span id="pageInfo"></span>
+        <button class="ghost" onclick="changePage(1)">下一页</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>④ 风险模型配置与预警管理</h3>
+      <div class="toolbar">
+        <input id="modelName" placeholder="模型名称" value="城中村消防风险量化模型V1" style="min-width:250px" />
+        <input id="wHazard" type="number" step="0.1" min="0" placeholder="隐患数量权重" value="0.5" />
+        <input id="wPending" type="number" step="0.1" min="0" placeholder="待处理权重" value="0.3" />
+        <input id="wCritical" type="number" step="0.1" min="0" placeholder="高风险权重" value="0.2" />
+        <input id="warningThreshold" type="number" min="1" placeholder="预警阈值" value="75" />
+        <button onclick="saveRiskModel()">保存模型参数</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <button class="ghost" onclick="loadRisk()">刷新风险数据</button>
+        <button class="ghost" onclick="runRiskWarning()">触发预警扫描</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>区域编码</th><th>风险分值</th><th>风险等级</th><th>预警状态</th></tr></thead>
+          <tbody id="tbodyRisk"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>⑤ 消防知识管理与推送规则</h3>
+      <div class="toolbar">
+        <select id="knowRole">
+          <option value="RESIDENT">居民</option>
+          <option value="GRID">网格员</option>
+          <option value="ADMIN">管理员</option>
+        </select>
+        <select id="knowRisk">
+          <option value="LOW">低风险</option>
+          <option value="MID">中风险</option>
+          <option value="HIGH">高风险</option>
+          <option value="CRITICAL">极高风险</option>
+        </select>
+        <button onclick="loadKnowledge()">刷新推荐知识</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <input id="pushRuleName" placeholder="推送规则名（如：高风险区域每日推送）" style="min-width:260px" />
+        <select id="pushRuleEnabled"><option value="1">启用</option><option value="0">停用</option></select>
+        <button class="ghost" onclick="addPushRule()">新增推送规则</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>知识标题</th><th>适用角色</th><th>风险级别</th></tr></thead>
+          <tbody id="tbodyKnowledge"></tbody>
+        </table>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>规则名称</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="tbodyPushRules"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>⑥ 数据可视化与分析（驾驶舱）</h3>
+      <div class="toolbar">
+        <button class="ghost" onclick="refreshDashboard()">刷新驾驶舱</button>
+        <button onclick="exportExcel()">导出隐患报表</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>统计项</th><th>数值</th><th>说明</th></tr></thead>
+          <tbody id="tbodyDashboard"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>⑦ 系统日志审计</h3>
+      <div class="toolbar">
+        <input id="logKeyword" placeholder="搜索日志（模块/操作/详情）" oninput="renderAuditLogs()" style="flex:1;min-width:260px" />
+        <button class="ghost" onclick="clearAuditLogs()">清空本地审计日志</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>时间</th><th>模块</th><th>操作</th><th>详情</th></tr></thead>
+          <tbody id="tbodyLogs"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
 <script>
-let allHazards=[];let riskData=[];let page=1;const pageSize=5;
-async function assignHazard(){try{await apiFetch(`/hazards/${hazardId.value}/assign`,{method:'POST',body:JSON.stringify({gridUserId:Number(gridUserId.value)})});alert('分派成功');loadHazards();}catch(e){alert(e.message)}}
-async function loadHazards(){try{allHazards=await apiFetch('/hazards');renderHazards();metrics();}catch(e){alert(e.message)}}
-function renderHazards(){const p=paginate(allHazards,page,pageSize);page=p.currentPage;tbodyHazards.innerHTML=p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${toHazardStatusLabel(x.status)}</td><td>${x.areaCode}</td><td>${x.assignedTo?x.assignedTo.id:''}</td></tr>`).join('');pageInfo.textContent=`第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;}
-function changePage(d){page+=d;renderHazards();}
-async function loadRisk(){try{riskData=await apiFetch('/risk/areas');tbodyRisk.innerHTML=riskData.map(r=>`<tr><td>${r.areaCode}</td><td>${r.riskScore}</td><td>${toRiskLevelLabel(r.riskLevel)}</td></tr>`).join('');metrics();}catch(e){alert(e.message)}}
-function metrics(){a1.textContent=allHazards.length;a2.textContent=allHazards.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED'||x.status==='IN_PROGRESS').length;a3.textContent=allHazards.filter(x=>x.status==='RESOLVED').length;a4.textContent=riskData.filter(r=>r.riskLevel==='HIGH'||r.riskLevel==='CRITICAL').length;}
-async function exportExcel(){try{const resp=await fetch(`${API_BASE}/reports/hazards/export`,{headers:{Authorization:'Bearer '+getToken()}});if(!resp.ok){alert('导出失败');return;}const blob=await resp.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='隐患报表.xlsx';a.click();URL.revokeObjectURL(url);}catch(e){alert(`导出失败：${e.message}`);}} 
-loadHazards();loadRisk();
-</script></body></html>
+const me = getCurrentUser();
+let allHazards = [];
+let riskData = [];
+let page = 1;
+const pageSize = 6;
+let knowledgeData = [];
+
+const LS_SYS_CONFIG = 'admin_sys_config';
+const LS_DICT = 'admin_data_dict';
+const LS_USERS = 'admin_managed_users';
+const LS_PUSH_RULES = 'admin_push_rules';
+const LS_AUDIT = 'admin_audit_logs';
+const LS_MODEL = 'admin_risk_model';
+
+function ensureAdminRole(){
+  if(me.role !== 'ADMIN'){
+    alert('当前账号不是管理员账号，无法进入管理员端');
+    location.href = './login.html';
+  }
+}
+
+function readArr(k){ return JSON.parse(localStorage.getItem(k) || '[]'); }
+function writeArr(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+function readObj(k, d={}){ return JSON.parse(localStorage.getItem(k) || JSON.stringify(d)); }
+
+function addAudit(module, operation, detail){
+  const logs = readArr(LS_AUDIT);
+  logs.unshift({time: new Date().toISOString().replace('T',' ').slice(0,19), module, operation, detail});
+  writeArr(LS_AUDIT, logs.slice(0, 500));
+}
+
+function saveSystemConfig(){
+  const cfg = {
+    apiBase: cfgApiBase.value.trim(),
+    defaultArea: cfgDefaultArea.value.trim().toUpperCase(),
+    rolePolicy: cfgRolePolicy.value
+  };
+  localStorage.setItem('apiBase', cfg.apiBase || localStorage.getItem('apiBase') || API_BASE);
+  localStorage.setItem('adminDefaultArea', cfg.defaultArea || 'A001');
+  writeArr(LS_SYS_CONFIG, [cfg]);
+  addAudit('系统配置', '保存配置', `默认辖区=${cfg.defaultArea || 'A001'}；策略=${cfg.rolePolicy}`);
+  alert('系统配置已保存（刷新页面后生效）');
+  renderAuditLogs();
+}
+
+function loadSystemConfig(){
+  const cfg = readArr(LS_SYS_CONFIG)[0] || {};
+  cfgApiBase.value = cfg.apiBase || localStorage.getItem('apiBase') || API_BASE;
+  cfgDefaultArea.value = cfg.defaultArea || localStorage.getItem('adminDefaultArea') || 'A001';
+  cfgRolePolicy.value = cfg.rolePolicy || 'STRICT';
+}
+
+function addDictItem(){
+  if(!dictType.value.trim() || !dictValue.value.trim()) return alert('请填写完整字典信息');
+  const list = readArr(LS_DICT);
+  list.unshift({id: Date.now(), type: dictType.value.trim(), value: dictValue.value.trim()});
+  writeArr(LS_DICT, list);
+  addAudit('系统配置', '新增字典项', `${dictType.value.trim()}=${dictValue.value.trim()}`);
+  dictType.value=''; dictValue.value='';
+  renderDict();
+  renderAuditLogs();
+}
+
+function delDict(id){
+  writeArr(LS_DICT, readArr(LS_DICT).filter(x=>x.id!==id));
+  addAudit('系统配置', '删除字典项', `id=${id}`);
+  renderDict();
+  renderAuditLogs();
+}
+
+function renderDict(){
+  const list = readArr(LS_DICT);
+  tbodyDict.innerHTML = list.map(x=>`<tr><td>${x.type}</td><td>${x.value}</td><td><button class='ghost' onclick='delDict(${x.id})'>删除</button></td></tr>`).join('');
+}
+
+async function assignHazard(){
+  try{
+    await apiFetch(`/hazards/${hazardId.value}/assign`, {method:'POST', body: JSON.stringify({gridUserId:Number(gridUserId.value)})});
+    addAudit('隐患流程', '分派/重分配', `隐患${hazardId.value} -> 网格员${gridUserId.value}`);
+    alert('分派成功');
+    loadHazards();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function urgeHazard(){
+  if(!hazardId.value) return alert('请先输入隐患编号');
+  addAudit('隐患流程', '督办提醒', `对隐患${hazardId.value}发起督办`);
+  alert(`已对隐患 ${hazardId.value} 发起督办提醒（示意）`);
+  renderAuditLogs();
+}
+
+async function loadHazards(){
+  try{
+    allHazards = await apiFetch('/hazards');
+    mergeUsersFromHazards();
+    renderHazards();
+    metrics();
+    refreshDashboard();
+  }catch(e){ alert(e.message); }
+}
+
+function renderHazards(){
+  const p = paginate(allHazards, page, pageSize);
+  page = p.currentPage;
+  tbodyHazards.innerHTML = p.pageItems.map(x=>`<tr>
+    <td>${x.id}</td><td>${x.title}</td><td>${toHazardTypeLabel(x.hazardType)}</td>
+    <td>${toHazardStatusLabel(x.status)}</td><td>${x.areaCode || '-'}</td>
+    <td>${x.assignedTo ? (x.assignedTo.username || x.assignedTo.id) : '-'}</td>
+    <td>${x.reportedBy ? (x.reportedBy.username || x.reportedBy.id) : '-'}</td>
+  </tr>`).join('');
+  pageInfo.textContent = `第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;
+}
+function changePage(d){ page += d; renderHazards(); }
+
+function saveRiskModel(){
+  const model = {
+    modelName: modelName.value.trim(),
+    wHazard: Number(wHazard.value || 0),
+    wPending: Number(wPending.value || 0),
+    wCritical: Number(wCritical.value || 0),
+    warningThreshold: Number(warningThreshold.value || 75)
+  };
+  localStorage.setItem(LS_MODEL, JSON.stringify(model));
+  addAudit('风险模型', '保存模型参数', JSON.stringify(model));
+  alert('风险模型参数已保存');
+  renderAuditLogs();
+}
+
+function loadRiskModel(){
+  const m = readObj(LS_MODEL, {});
+  if(m.modelName) modelName.value = m.modelName;
+  if(m.wHazard != null) wHazard.value = m.wHazard;
+  if(m.wPending != null) wPending.value = m.wPending;
+  if(m.wCritical != null) wCritical.value = m.wCritical;
+  if(m.warningThreshold != null) warningThreshold.value = m.warningThreshold;
+}
+
+function warningTag(score){
+  const threshold = Number(warningThreshold.value || 75);
+  return score >= threshold ? '<span class="badge">已触发预警</span>' : '<span class="sub">未触发</span>';
+}
+
+async function loadRisk(){
+  try{
+    riskData = await apiFetch('/risk/areas');
+    tbodyRisk.innerHTML = riskData.map(r=>`<tr><td>${r.areaCode}</td><td>${r.riskScore}</td><td>${toRiskLevelLabel(r.riskLevel)}</td><td>${warningTag(Number(r.riskScore || 0))}</td></tr>`).join('');
+    metrics();
+    refreshDashboard();
+  }catch(e){ alert(e.message); }
+}
+
+function runRiskWarning(){
+  const threshold = Number(warningThreshold.value || 75);
+  const hit = riskData.filter(r=>Number(r.riskScore || 0) >= threshold);
+  addAudit('风险模型', '预警扫描', `阈值=${threshold}，触发区域=${hit.map(x=>x.areaCode).join(',') || '无'}`);
+  alert(hit.length ? `预警触发区域：${hit.map(x=>x.areaCode).join('、')}` : '当前无区域触发预警');
+  renderAuditLogs();
+  loadRisk();
+}
+
+function metrics(){
+  a1.textContent = allHazards.length;
+  a2.textContent = allHazards.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED'||x.status==='IN_PROGRESS').length;
+  a3.textContent = allHazards.filter(x=>x.status==='RESOLVED').length;
+  a4.textContent = riskData.filter(r=>r.riskLevel==='HIGH'||r.riskLevel==='CRITICAL').length;
+}
+
+async function loadKnowledge(){
+  try{
+    knowledgeData = await apiFetch(`/knowledge/recommend?role=${knowRole.value}&riskLevel=${knowRisk.value}`);
+    tbodyKnowledge.innerHTML = knowledgeData.map(k=>`<tr><td>${k.title || '-'}</td><td>${k.targetRole || knowRole.value}</td><td>${k.riskLevel || knowRisk.value}</td></tr>`).join('');
+    addAudit('消防知识', '刷新推荐', `role=${knowRole.value}, risk=${knowRisk.value}, count=${knowledgeData.length}`);
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+function addPushRule(){
+  if(!pushRuleName.value.trim()) return alert('请填写推送规则名');
+  const list = readArr(LS_PUSH_RULES);
+  list.unshift({id: Date.now(), name: pushRuleName.value.trim(), enabled: pushRuleEnabled.value === '1'});
+  writeArr(LS_PUSH_RULES, list);
+  addAudit('消防知识', '新增推送规则', `${pushRuleName.value.trim()}(${pushRuleEnabled.value === '1' ? '启用' : '停用'})`);
+  pushRuleName.value = '';
+  renderPushRules();
+  renderAuditLogs();
+}
+
+function togglePushRule(id){
+  const list = readArr(LS_PUSH_RULES).map(x=>x.id===id?({...x, enabled:!x.enabled}):x);
+  writeArr(LS_PUSH_RULES, list);
+  addAudit('消防知识', '切换推送规则', `id=${id}`);
+  renderPushRules();
+  renderAuditLogs();
+}
+
+function renderPushRules(){
+  const list = readArr(LS_PUSH_RULES);
+  tbodyPushRules.innerHTML = list.map(x=>`<tr><td>${x.name}</td><td>${x.enabled?'启用':'停用'}</td><td><button class='ghost' onclick='togglePushRule(${x.id})'>切换状态</button></td></tr>`).join('');
+}
+
+function mergeUsersFromHazards(){
+  const current = readArr(LS_USERS);
+  const map = new Map(current.map(x=>[x.username, x]));
+  allHazards.forEach(h=>{
+    const reporter = h.reportedBy?.username;
+    const grid = h.assignedTo?.username;
+    if(reporter && !map.has(reporter)) map.set(reporter, {username: reporter, role:'RESIDENT', status:'PENDING', source:'隐患上报'});
+    if(grid && !map.has(grid)) map.set(grid, {username: grid, role:'GRID', status:'APPROVED', source:'任务分派'});
+  });
+  writeArr(LS_USERS, Array.from(map.values()));
+  renderUsers();
+}
+
+function addManagedUser(){
+  const username = newUsername.value.trim();
+  if(!username) return alert('请输入用户名');
+  const list = readArr(LS_USERS);
+  if(list.some(x=>x.username===username)) return alert('该用户已存在');
+  list.unshift({username, role:newUserRole.value, status:'PENDING', source:'管理员新增'});
+  writeArr(LS_USERS, list);
+  addAudit('用户管理', '新增用户档案', `${username}(${newUserRole.value})`);
+  newUsername.value = '';
+  renderUsers();
+  renderAuditLogs();
+}
+
+function setUserStatus(username, status){
+  const list = readArr(LS_USERS).map(x=>x.username===username?({...x,status}):x);
+  writeArr(LS_USERS, list);
+  addAudit('用户管理', status==='APPROVED'?'审核通过':'停用账户', username);
+  renderUsers();
+  renderAuditLogs();
+}
+
+function renderUsers(){
+  const keyword = (userKeyword.value || '').trim().toLowerCase();
+  const list = readArr(LS_USERS).filter(x => !keyword || x.username.toLowerCase().includes(keyword) || (x.role||'').toLowerCase().includes(keyword));
+  tbodyUsers.innerHTML = list.map(x=>`<tr>
+    <td>${x.username}</td><td>${x.role}</td><td>${x.status || 'PENDING'}</td><td>${x.source || '-'}</td>
+    <td>
+      <button class='ghost' onclick="setUserStatus('${x.username}','APPROVED')">通过</button>
+      <button class='ghost' onclick="setUserStatus('${x.username}','DISABLED')">停用</button>
+    </td>
+  </tr>`).join('');
+}
+
+function refreshDashboard(){
+  const pending = allHazards.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED'||x.status==='IN_PROGRESS').length;
+  const resolved = allHazards.filter(x=>x.status==='RESOLVED').length;
+  const efficiency = allHazards.length ? ((resolved / allHazards.length) * 100).toFixed(1) + '%' : '0%';
+  const criticalArea = riskData.filter(x=>x.riskLevel==='CRITICAL').length;
+  const rows = [
+    ['隐患总量', allHazards.length, '系统内全部隐患记录数'],
+    ['待处理隐患', pending, '待分派 + 已分派 + 处理中'],
+    ['办结率', efficiency, '已解决隐患占比'],
+    ['极高风险区域', criticalArea, '风险等级为CRITICAL的区域数']
+  ];
+  tbodyDashboard.innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+}
+
+async function exportExcel(){
+  try{
+    const resp = await fetch(`${API_BASE}/reports/hazards/export`, {headers:{Authorization:'Bearer '+getToken()}});
+    if(!resp.ok){ alert('导出失败'); return; }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '隐患报表.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+    addAudit('数据分析', '导出报表', '导出隐患报表.xlsx');
+    renderAuditLogs();
+  }catch(e){ alert(`导出失败：${e.message}`); }
+}
+
+function clearAuditLogs(){
+  if(!confirm('确认清空本地审计日志？')) return;
+  writeArr(LS_AUDIT, []);
+  renderAuditLogs();
+}
+
+function renderAuditLogs(){
+  const keyword = (logKeyword.value || '').trim().toLowerCase();
+  const list = readArr(LS_AUDIT).filter(x => !keyword || [x.module,x.operation,x.detail].join(' ').toLowerCase().includes(keyword));
+  tbodyLogs.innerHTML = list.map(x=>`<tr><td>${x.time}</td><td>${x.module}</td><td>${x.operation}</td><td>${x.detail}</td></tr>`).join('');
+}
+
+ensureAdminRole();
+loadSystemConfig();
+renderDict();
+renderPushRules();
+renderUsers();
+renderAuditLogs();
+loadHazards();
+loadRisk();
+loadKnowledge();
+</script>
+</body>
+</html>
