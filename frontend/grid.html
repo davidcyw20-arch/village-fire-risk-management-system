@@ -1,16 +1,274 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8" /><title>网格员端</title><link rel="stylesheet" href="./styles.css" /><script src="./common.js?v=20260305"></script></head>
-<body><div class="app"><aside class="sidebar"><div class="brand">网格员管理端</div><nav class="menu"><a class="active" href="#">任务处理</a><a href="./map.html">辖区地图</a><a href="./login.html">返回登录</a></nav></aside>
-<main class="main"><div class="topbar"><div><div class="title">网格员工作台</div><div class="sub">接收任务、现场核实、处理反馈、巡查管理</div></div><button class="danger" onclick="clearToken();location.href='./login.html'">退出</button></div>
-<section class="cards"><div class="card"><h4>已分派</h4><div id="g1" class="metric">-</div></div><div class="card"><h4>处理中</h4><div id="g2" class="metric">-</div></div><div class="card"><h4>已办结</h4><div id="g3" class="metric">-</div></div><div class="card"><h4>任务总数</h4><div id="g4" class="metric">-</div></div></section>
-<section class="panel"><h3>隐患任务处理</h3><div class="toolbar"><input id="hazardId" placeholder="隐患编号" /><input id="note" placeholder="处理说明" style="flex:1;min-width:220px" /><select id="targetStatus"><option value="IN_PROGRESS">处理中</option><option value="RESOLVED">已解决</option><option value="REJECTED">已驳回</option></select><button onclick="processHazard()">提交处理</button></div></section>
-<section class="panel"><h3>辖区任务列表</h3><div class="table-wrap"><table><thead><tr><th>编号</th><th>标题</th><th>状态</th><th>分派人</th><th>网格员</th></tr></thead><tbody id="tbody"></tbody></table></div><div class="pagebar"><button class="ghost" onclick="changePage(-1)">上一页</button><span id="pageInfo"></span><button class="ghost" onclick="changePage(1)">下一页</button></div></section>
-</main></div>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>网格员端</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./common.js?v=20260305"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">网格员管理端</div>
+    <nav class="menu">
+      <a class="active" href="#">任务处理</a>
+      <a href="./map.html">辖区地图</a>
+      <a href="./login.html">返回登录</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="title">网格员工作台</div>
+        <div class="sub">登录权限校验、任务处理反馈、巡查管理、辖区信息维护、统计分析</div>
+      </div>
+      <button class="danger" onclick="clearToken();location.href='./login.html'">退出</button>
+    </div>
+
+    <section class="cards">
+      <div class="card"><h4>已分派</h4><div id="g1" class="metric">-</div></div>
+      <div class="card"><h4>处理中</h4><div id="g2" class="metric">-</div></div>
+      <div class="card"><h4>已办结</h4><div id="g3" class="metric">-</div></div>
+      <div class="card"><h4>平均处理时长(小时)</h4><div id="g4" class="metric">-</div></div>
+    </section>
+
+    <section class="panel">
+      <h3>登录与权限信息</h3>
+      <div class="toolbar">
+        <span class="badge">账号：<b id="whoUser">-</b></span>
+        <span class="badge">角色：<b id="whoRole">-</b></span>
+        <span class="badge">辖区：<b id="whoArea">-</b></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>隐患任务处理与反馈</h3>
+      <div class="toolbar">
+        <input id="hazardId" placeholder="隐患编号" />
+        <input id="note" placeholder="处理说明（现场核实过程）" style="flex:1;min-width:240px" />
+        <select id="targetStatus">
+          <option value="IN_PROGRESS">处理中</option>
+          <option value="RESOLVED">已解决</option>
+          <option value="REJECTED">已驳回</option>
+        </select>
+        <input id="processImageFile" type="file" accept="image/*" />
+        <button class="ghost" onclick="uploadProcessPhoto()">上传反馈照片</button>
+        <button onclick="processHazard()">提交处理</button>
+      </div>
+      <div class="sub" style="margin-top:8px">反馈照片地址：<span id="processImageUrl">未上传</span></div>
+    </section>
+
+    <section class="panel">
+      <h3>巡查管理</h3>
+      <div class="toolbar">
+        <input id="patrolDate" type="date" />
+        <input id="patrolArea" placeholder="巡查区域" />
+        <input id="patrolResult" placeholder="巡查记录/发现情况" style="flex:1;min-width:240px" />
+        <button onclick="addPatrolRecord()">新增巡查记录</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>日期</th><th>区域</th><th>记录</th><th>操作</th></tr></thead>
+          <tbody id="tbodyPatrol"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>辖区信息维护（建筑与居民）</h3>
+      <div class="grid">
+        <input id="buildingName" placeholder="建筑名称" />
+        <input id="buildingAddress" placeholder="建筑地址" />
+        <button onclick="addBuilding()">新增建筑信息</button>
+
+        <input id="residentName" placeholder="居民姓名" />
+        <input id="residentPhone" placeholder="居民电话" />
+        <button onclick="addResident()">新增居民信息</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>类型</th><th>名称</th><th>详情</th><th>操作</th></tr></thead>
+          <tbody id="tbodyAreaInfo"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>辖区任务列表</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>编号</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th><th>上报时间</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagebar">
+        <button class="ghost" onclick="changePage(-1)">上一页</button>
+        <span id="pageInfo"></span>
+        <button class="ghost" onclick="changePage(1)">下一页</button>
+      </div>
+    </section>
+  </main>
+</div>
+
 <script>
-let allData=[];let page=1;const pageSize=5;
-async function processHazard(){try{await apiFetch(`/hazards/${hazardId.value}/process`,{method:'POST',body:JSON.stringify({note:note.value,targetStatus:targetStatus.value})});alert('处理提交成功');loadData();}catch(e){alert(e.message)}}
-async function loadData(){try{allData=await apiFetch('/hazards');render();metrics();}catch(e){alert(e.message)}}
-function metrics(){g1.textContent=allData.filter(x=>x.status==='ASSIGNED').length;g2.textContent=allData.filter(x=>x.status==='IN_PROGRESS').length;g3.textContent=allData.filter(x=>x.status==='RESOLVED').length;g4.textContent=allData.length;}
-function render(){const p=paginate(allData,page,pageSize);page=p.currentPage;tbody.innerHTML=p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${toHazardStatusLabel(x.status)}</td><td>${x.assignedBy?x.assignedBy.id:''}</td><td>${x.assignedTo?x.assignedTo.id:''}</td></tr>`).join('');pageInfo.textContent=`第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;}
-function changePage(d){page+=d;render();}
+const me = getCurrentUser();
+let allData = [];
+let mine = [];
+let page = 1;
+const pageSize = 5;
+let processPhotoUrl = '';
+
+const areaCode = (localStorage.getItem(`grid_area_${me.username}`) || 'A001').toUpperCase();
+localStorage.setItem(`grid_area_${me.username}`, areaCode);
+
+function patrolKey(){ return `grid_patrol_${me.username}`; }
+function areaInfoKey(){ return `grid_area_info_${me.username}`; }
+
+function ensureGridRole(){
+  whoUser.textContent = me.username || '未知';
+  whoRole.textContent = me.role || '未知';
+  whoArea.textContent = areaCode;
+  if (me.role !== 'GRID') {
+    alert('当前账号不是网格员账号，无法进入网格员端');
+    location.href = './login.html';
+  }
+}
+
+function fmtTime(v){ return v ? String(v).replace('T',' ') : '-'; }
+
+async function uploadProcessPhoto(){
+  try{
+    if(!processImageFile.files || !processImageFile.files.length){
+      alert('请先选择反馈照片');
+      return;
+    }
+    processPhotoUrl = await uploadImageFile(processImageFile.files[0]);
+    processImageUrl.textContent = processPhotoUrl;
+    alert('反馈照片上传成功');
+  }catch(e){alert(e.message)}
+}
+
+async function processHazard(){
+  try{
+    const feedback = note.value + (processPhotoUrl ? `；反馈照片：${processPhotoUrl}` : '');
+    await apiFetch(`/hazards/${hazardId.value}/process`, {
+      method:'POST',
+      body:JSON.stringify({note: feedback, targetStatus: targetStatus.value})
+    });
+    alert('处理提交成功');
+    processPhotoUrl = '';
+    processImageUrl.textContent = '未上传';
+    note.value = '';
+    processImageFile.value = '';
+    loadData();
+  }catch(e){alert(e.message)}
+}
+
+async function loadData(){
+  try{
+    allData = await apiFetch('/hazards');
+    mine = allData.filter(x => {
+      const assignedToMe = x.assignedTo && x.assignedTo.username === me.username;
+      const sameArea = (x.areaCode || '').toUpperCase() === areaCode;
+      return assignedToMe || sameArea;
+    });
+    render();
+    metrics();
+  }catch(e){alert(e.message)}
+}
+
+function metrics(){
+  g1.textContent = mine.filter(x=>x.status==='ASSIGNED').length;
+  g2.textContent = mine.filter(x=>x.status==='IN_PROGRESS').length;
+  g3.textContent = mine.filter(x=>x.status==='RESOLVED').length;
+
+  const resolved = mine.filter(x=>x.status==='RESOLVED' && x.createdAt && x.resolvedAt);
+  if(!resolved.length){ g4.textContent = '0'; return; }
+  const avgMs = resolved.reduce((s,x)=>s+(new Date(x.resolvedAt)-new Date(x.createdAt)),0)/resolved.length;
+  g4.textContent = (avgMs / 3600000).toFixed(1);
+}
+
+function render(){
+  const p = paginate(mine, page, pageSize);
+  page = p.currentPage;
+  tbody.innerHTML = p.pageItems.map(x=>`<tr>
+    <td>${x.id}</td>
+    <td>${x.title}</td>
+    <td>${toHazardTypeLabel(x.hazardType)}</td>
+    <td>${toHazardStatusLabel(x.status)}</td>
+    <td>${x.areaCode}</td>
+    <td>${fmtTime(x.createdAt)}</td>
+  </tr>`).join('');
+  pageInfo.textContent = `第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;
+}
+function changePage(d){ page += d; render(); }
+
+function readArr(key){ return JSON.parse(localStorage.getItem(key) || '[]'); }
+function writeArr(key, data){ localStorage.setItem(key, JSON.stringify(data)); }
+
+function addPatrolRecord(){
+  if(!patrolDate.value || !patrolArea.value || !patrolResult.value){
+    alert('请填写完整巡查信息');
+    return;
+  }
+  const list = readArr(patrolKey());
+  list.unshift({id: Date.now(), date: patrolDate.value, area: patrolArea.value, result: patrolResult.value});
+  writeArr(patrolKey(), list);
+  patrolArea.value=''; patrolResult.value='';
+  renderPatrol();
+}
+
+function delPatrol(id){
+  const list = readArr(patrolKey()).filter(x=>x.id!==id);
+  writeArr(patrolKey(), list);
+  renderPatrol();
+}
+
+function renderPatrol(){
+  const list = readArr(patrolKey());
+  tbodyPatrol.innerHTML = list.map(x=>`<tr>
+    <td>${x.date}</td><td>${x.area}</td><td>${x.result}</td>
+    <td><button class='ghost' onclick='delPatrol(${x.id})'>删除</button></td>
+  </tr>`).join('');
+}
+
+function addBuilding(){
+  if(!buildingName.value || !buildingAddress.value) return alert('请填写建筑信息');
+  const list = readArr(areaInfoKey());
+  list.unshift({id: Date.now(), type:'建筑', name:buildingName.value, detail:buildingAddress.value});
+  writeArr(areaInfoKey(), list);
+  buildingName.value=''; buildingAddress.value='';
+  renderAreaInfo();
+}
+
+function addResident(){
+  if(!residentName.value || !residentPhone.value) return alert('请填写居民信息');
+  const list = readArr(areaInfoKey());
+  list.unshift({id: Date.now(), type:'居民', name:residentName.value, detail:residentPhone.value});
+  writeArr(areaInfoKey(), list);
+  residentName.value=''; residentPhone.value='';
+  renderAreaInfo();
+}
+
+function delAreaInfo(id){
+  const list = readArr(areaInfoKey()).filter(x=>x.id!==id);
+  writeArr(areaInfoKey(), list);
+  renderAreaInfo();
+}
+
+function renderAreaInfo(){
+  const list = readArr(areaInfoKey());
+  tbodyAreaInfo.innerHTML = list.map(x=>`<tr>
+    <td>${x.type}</td><td>${x.name}</td><td>${x.detail}</td>
+    <td><button class='ghost' onclick='delAreaInfo(${x.id})'>删除</button></td>
+  </tr>`).join('');
+}
+
+ensureGridRole();
 loadData();
-</script></body></html>
+renderPatrol();
+renderAreaInfo();
+</script>
+</body>
+</html>
