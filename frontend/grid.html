@@ -2,7 +2,7 @@
 <body><div class="app"><aside class="sidebar"><div class="brand">网格员管理端</div><nav class="menu"><a class="active" href="#">任务处理</a><a href="./map.html">辖区地图</a><a href="./login.html">返回登录</a></nav></aside>
 <main class="main"><div class="topbar"><div><div class="title">网格员工作台</div><div class="sub">接收任务、现场核实、处理反馈、巡查管理</div></div><button class="danger" onclick="clearToken();location.href='./login.html'">退出</button></div>
 <section class="cards"><div class="card"><h4>已分派</h4><div id="g1" class="metric">-</div></div><div class="card"><h4>处理中</h4><div id="g2" class="metric">-</div></div><div class="card"><h4>已办结</h4><div id="g3" class="metric">-</div></div><div class="card"><h4>任务总数</h4><div id="g4" class="metric">-</div></div></section>
-<section class="panel"><h3>隐患任务处理</h3><div class="toolbar"><input id="hazardId" placeholder="隐患ID" /><input id="note" placeholder="处理说明" style="flex:1;min-width:220px" /><select id="targetStatus"><option>IN_PROGRESS</option><option>RESOLVED</option><option>REJECTED</option></select><button onclick="processHazard()">提交处理</button></div></section>
+<section class="panel"><h3>隐患任务处理</h3><div class="toolbar"><input id="hazardId" placeholder="隐患ID" /><input id="note" placeholder="处理说明" style="flex:1;min-width:220px" /><select id="targetStatus"><option value="IN_PROGRESS">处理中</option><option value="RESOLVED">已解决</option><option value="REJECTED">已驳回</option></select><button onclick="processHazard()">提交处理</button></div></section>
 <section class="panel"><h3>辖区任务列表</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>标题</th><th>状态</th><th>分派人</th><th>网格员</th></tr></thead><tbody id="tbody"></tbody></table></div><div class="pagebar"><button class="ghost" onclick="changePage(-1)">上一页</button><span id="pageInfo"></span><button class="ghost" onclick="changePage(1)">下一页</button></div></section>
 </main></div>
 <script>
@@ -10,7 +10,7 @@ let allData=[];let page=1;const pageSize=5;
 async function processHazard(){try{await apiFetch(`/hazards/${hazardId.value}/process`,{method:'POST',body:JSON.stringify({note:note.value,targetStatus:targetStatus.value})});alert('处理提交成功');loadData();}catch(e){alert(e.message)}}
 async function loadData(){try{allData=await apiFetch('/hazards');render();metrics();}catch(e){alert(e.message)}}
 function metrics(){g1.textContent=allData.filter(x=>x.status==='ASSIGNED').length;g2.textContent=allData.filter(x=>x.status==='IN_PROGRESS').length;g3.textContent=allData.filter(x=>x.status==='RESOLVED').length;g4.textContent=allData.length;}
-function render(){const p=paginate(allData,page,pageSize);page=p.currentPage;tbody.innerHTML=p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${x.status}</td><td>${x.assignedBy?x.assignedBy.id:''}</td><td>${x.assignedTo?x.assignedTo.id:''}</td></tr>`).join('');pageInfo.textContent=`第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;}
+function render(){const p=paginate(allData,page,pageSize);page=p.currentPage;tbody.innerHTML=p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${toHazardStatusLabel(x.status)}</td><td>${x.assignedBy?x.assignedBy.id:''}</td><td>${x.assignedTo?x.assignedTo.id:''}</td></tr>`).join('');pageInfo.textContent=`第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;}
 function changePage(d){page+=d;render();}
 loadData();
 </script></body></html>

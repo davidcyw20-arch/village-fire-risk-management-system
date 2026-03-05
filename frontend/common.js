@@ -58,3 +58,31 @@ function paginate(list, page, pageSize) {
     currentPage
   };
 }
+
+
+const HAZARD_TYPE_LABELS = {
+  BLOCKED_EXIT: '消防通道堵塞',
+  GAS_LEAK: '燃气泄漏风险',
+  ELECTRICAL: '电气隐患',
+  FIRE_FACILITY_DAMAGE: '消防设施损坏',
+  ILLEGAL_STORAGE: '违规存放易燃物',
+};
+
+const HAZARD_STATUS_LABELS = {
+  REPORTED: '待受理',
+  ASSIGNED: '已分派',
+  IN_PROGRESS: '处理中',
+  RESOLVED: '已解决',
+  REJECTED: '已驳回',
+};
+
+const RISK_LEVEL_LABELS = {
+  LOW: '低风险',
+  MID: '中风险',
+  HIGH: '高风险',
+  CRITICAL: '极高风险',
+};
+
+function toHazardTypeLabel(v){ return HAZARD_TYPE_LABELS[v] || v || '-'; }
+function toHazardStatusLabel(v){ return HAZARD_STATUS_LABELS[v] || v || '-'; }
+function toRiskLevelLabel(v){ return RISK_LEVEL_LABELS[v] || v || '-'; }

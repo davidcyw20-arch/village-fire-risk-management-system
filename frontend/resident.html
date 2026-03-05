@@ -5,10 +5,10 @@
     <div class="topbar"><div><div class="title">居民工作台</div><div class="sub">上报隐患、查看处理进度、接收消防知识与预警</div></div><button class="danger" onclick="clearToken();location.href='./login.html'">退出</button></div>
     <section class="cards"><div class="card"><h4>待处理隐患</h4><div id="m1" class="metric">-</div></div><div class="card"><h4>处理中</h4><div id="m2" class="metric">-</div></div><div class="card"><h4>已完成</h4><div id="m3" class="metric">-</div></div><div class="card"><h4>本页总数</h4><div id="m4" class="metric">-</div></div></section>
     <section class="panel"><h3>消防隐患上报 <span class="badge">拍照/描述/定位</span></h3><div class="grid">
-      <input id="title" placeholder="标题" /><input id="hazardType" placeholder="类型，如 BLOCKED_EXIT" />
+      <input id="title" placeholder="标题" /><input id="hazardType" placeholder="类型，如消防通道堵塞" />
       <input id="areaCode" placeholder="区域编码" /><input id="address" placeholder="地址" />
       <input id="latitude" placeholder="纬度" /><input id="longitude" placeholder="经度" />
-      <input id="imageUrl" placeholder="图片URL（可先上传）" style="grid-column:1/-1" /><select id="severity"><option>LOW</option><option selected>MID</option><option>HIGH</option><option>CRITICAL</option></select>
+      <input id="imageUrl" placeholder="图片URL（可先上传）" style="grid-column:1/-1" /><select id="severity"><option value="LOW">低风险</option><option value="MID" selected>中风险</option><option value="HIGH">高风险</option><option value="CRITICAL">极高风险</option></select>
       <button onclick="reportHazard()">提交上报</button>
       <textarea id="description" placeholder="隐患描述" style="grid-column:1/-1"></textarea>
     </div></section>
@@ -20,7 +20,7 @@ let allData=[];let page=1;const pageSize=5;
 async function reportHazard(){try{await apiFetch('/hazards',{method:'POST',body:JSON.stringify({title:title.value,description:description.value,hazardType:hazardType.value,areaCode:areaCode.value,address:address.value,latitude:Number(latitude.value),longitude:Number(longitude.value),imageUrl:imageUrl.value,severity:severity.value})});alert('上报成功');loadHazards();}catch(e){alert(e.message)}}
 async function loadHazards(){try{allData=await apiFetch('/hazards');render();metrics();}catch(e){alert(e.message)}}
 function metrics(){m1.textContent=allData.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED').length;m2.textContent=allData.filter(x=>x.status==='IN_PROGRESS').length;m3.textContent=allData.filter(x=>x.status==='RESOLVED').length;m4.textContent=allData.length;}
-function render(){const p=paginate(allData,page,pageSize);page=p.currentPage;tbody.innerHTML=p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${x.hazardType}</td><td>${x.status}</td><td>${x.areaCode}</td></tr>`).join('');pageInfo.textContent=`第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;}
+function render(){const p=paginate(allData,page,pageSize);page=p.currentPage;tbody.innerHTML=p.pageItems.map(x=>`<tr><td>${x.id}</td><td>${x.title}</td><td>${toHazardTypeLabel(x.hazardType)}</td><td>${toHazardStatusLabel(x.status)}</td><td>${x.areaCode}</td></tr>`).join('');pageInfo.textContent=`第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;}
 function changePage(d){page+=d;render();}
 loadHazards();
 </script></body></html>
