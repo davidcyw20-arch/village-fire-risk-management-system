@@ -11,7 +11,20 @@ function setToken(token) {
 
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem('loginRole');
 }
+
+function normalizeRole(raw) {
+  if (!raw) return '';
+  const v = String(raw).toUpperCase();
+  if (v.startsWith('ROLE_')) return v.substring(5);
+  return v;
+}
+
+function setLoginRole(role) {
+  localStorage.setItem('loginRole', normalizeRole(role));
+}
+
 
 async function apiFetch(path, options = {}) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
@@ -101,9 +114,11 @@ function parseJwtPayload(token) {
 
 function getCurrentUser() {
   const p = parseJwtPayload(getToken());
+  const roleFromToken = normalizeRole(p.role || p.authority || p.authorities);
+  const role = roleFromToken || normalizeRole(localStorage.getItem('loginRole')) || '';
   return {
-    username: p.sub || '',
-    role: p.role || '',
+    username: p.sub || localStorage.getItem('loginUsername') || '',
+    role,
   };
 }
 
