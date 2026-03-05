@@ -175,7 +175,7 @@ function buildDefaultHazardTypeSuggestions(){
 async function loadHazardTypeSuggestions(){
   let items = [];
   try{
-    items = await apiFetch('/dictionaries/items?dictType=' + encodeURIComponent('隐患类型'));
+    items = await apiFetch('/dictionaries/items?dictType=' + encodeURIComponent('隐患类型') + '&ts=' + Date.now());
   }catch(e){
     items = [];
   }

@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/dictionaries")
@@ -24,7 +27,39 @@ public class DictionaryController {
     @GetMapping("/items")
     @PreAuthorize("hasAnyRole('RESIDENT','GRID','ADMIN')")
     public ApiResponse<List<DataDictionaryItem>> listByType(@RequestParam String dictType) {
-        return ApiResponse.success(dataDictionaryItemRepository
-                .findByEnabledTrueAndDictTypeIgnoreCaseOrderByIdDesc(dictType));
+        String normalizedType = dictType == null ? "" : dictType.trim();
+        List<DataDictionaryItem> exact = dataDictionaryItemRepository
+                .findByEnabledTrueAndDictTypeIgnoreCaseOrderByIdDesc(normalizedType);
+
+        if (!exact.isEmpty()) {
+            return ApiResponse.success(exact);
+        }
+
+        List<DataDictionaryItem> fuzzy = dataDictionaryItemRepository
+                .findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc(normalizedType);
+
+        if (!fuzzy.isEmpty()) {
+            return ApiResponse.success(distinctByTypeValue(fuzzy));
+        }
+
+        if ("隐患类型".equals(normalizedType)) {
+            List<DataDictionaryItem> fallback = new ArrayList<>();
+            fallback.addAll(dataDictionaryItemRepository.findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc("隐患"));
+            fallback.addAll(dataDictionaryItemRepository.findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc("类型"));
+            fallback.addAll(dataDictionaryItemRepository.findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc("hazard"));
+            return ApiResponse.success(distinctByTypeValue(fallback));
+        }
+
+        return ApiResponse.success(List.of());
+    }
+
+    private List<DataDictionaryItem> distinctByTypeValue(List<DataDictionaryItem> items) {
+        Map<String, DataDictionaryItem> dedup = new LinkedHashMap<>();
+        for (DataDictionaryItem item : items) {
+            String key = (item.getDictType() == null ? "" : item.getDictType().trim().toLowerCase()) + "::"
+                    + (item.getDictValue() == null ? "" : item.getDictValue().trim().toLowerCase());
+            dedup.putIfAbsent(key, item);
+        }
+        return new ArrayList<>(dedup.values());
     }
 }

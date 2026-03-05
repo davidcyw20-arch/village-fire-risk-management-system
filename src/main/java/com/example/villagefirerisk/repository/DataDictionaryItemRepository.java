@@ -9,4 +9,6 @@ public interface DataDictionaryItemRepository extends JpaRepository<DataDictiona
     List<DataDictionaryItem> findByOrderByIdDesc();
 
     List<DataDictionaryItem> findByEnabledTrueAndDictTypeIgnoreCaseOrderByIdDesc(String dictType);
+
+    List<DataDictionaryItem> findByEnabledTrueAndDictTypeContainingIgnoreCaseOrderByIdDesc(String dictType);
 }
