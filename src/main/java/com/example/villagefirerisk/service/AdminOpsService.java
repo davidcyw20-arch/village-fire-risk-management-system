@@ -72,12 +72,13 @@ public class AdminOpsService {
     }
 
     public AdminConfigDtos.RiskWarningScanResponse scanRiskWarnings() {
-        int threshold = 75;
+        int thresholdCandidate = 75;
         try {
-            threshold = Integer.parseInt(systemConfigItemRepository.findByConfigKey("warningThreshold")
+            thresholdCandidate = Integer.parseInt(systemConfigItemRepository.findByConfigKey("warningThreshold")
                     .map(SystemConfigItem::getConfigValue).orElse("75"));
         } catch (Exception ignored) {}
 
+        final int threshold = thresholdCandidate;
         List<com.example.villagefirerisk.dto.RiskAreaResponse> areas = riskService.calculateAreaRisk();
         List<com.example.villagefirerisk.dto.RiskAreaResponse> hit = areas.stream()
                 .filter(x -> x.getRiskScore() >= threshold)
