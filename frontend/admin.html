@@ -305,7 +305,7 @@ async function loadHazards(withNotify = false){
     }
     renderHazards();
     metrics();
-    refreshDashboard();
+    renderDashboard();
   }catch(e){ alert(e.message); }
 }
 
@@ -360,7 +360,7 @@ async function loadRisk(){
     riskData = await apiFetch('/risk/areas');
     tbodyRisk.innerHTML = riskData.map(r=>`<tr><td>${r.areaCode}</td><td>${r.riskScore}</td><td>${toRiskLevelLabel(r.riskLevel)}</td><td>${warningTag(Number(r.riskScore || 0))}</td></tr>`).join('');
     metrics();
-    refreshDashboard();
+    renderDashboard();
   }catch(e){ alert(e.message); }
 }
 
@@ -533,18 +533,36 @@ function renderUsers(){
   </tr>`).join('');
 }
 
-function refreshDashboard(){
+function renderDashboard(){
   const pending = allHazards.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED'||x.status==='IN_PROGRESS').length;
   const resolved = allHazards.filter(x=>x.status==='RESOLVED').length;
   const efficiency = allHazards.length ? ((resolved / allHazards.length) * 100).toFixed(1) + '%' : '0%';
   const criticalArea = riskData.filter(x=>x.riskLevel==='CRITICAL').length;
+  const highArea = riskData.filter(x=>x.riskLevel==='HIGH').length;
+  const avgRisk = riskData.length ? (riskData.reduce((s, x)=>s + Number(x.riskScore || 0), 0) / riskData.length).toFixed(1) : '0.0';
   const rows = [
     ['隐患总量', allHazards.length, '系统内全部隐患记录数'],
     ['待处理隐患', pending, '待分派 + 已分派 + 处理中'],
     ['办结率', efficiency, '已解决隐患占比'],
-    ['极高风险区域', criticalArea, '风险等级为CRITICAL的区域数']
+    ['高风险区域', highArea, '风险等级为HIGH的区域数'],
+    ['极高风险区域', criticalArea, '风险等级为CRITICAL的区域数'],
+    ['区域平均风险分', avgRisk, '所有区域风险分值的平均值']
   ];
   tbodyDashboard.innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+}
+
+async function refreshDashboard(){
+  try{
+    const [hazards, risks] = await Promise.all([
+      apiFetch('/admin/hazards/monitor'),
+      apiFetch('/risk/areas')
+    ]);
+    allHazards = hazards || [];
+    riskData = risks || [];
+    metrics();
+    renderDashboard();
+    alert('驾驶舱数据已更新');
+  }catch(e){ alert('刷新驾驶舱失败：' + e.message); }
 }
 
 async function exportExcel(){
@@ -589,6 +607,7 @@ loadHazards();
 loadRisk();
 loadRiskModel();
 loadKnowledge();
+renderDashboard();
 </script>
 </body>
 </html>

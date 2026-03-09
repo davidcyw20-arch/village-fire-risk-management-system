@@ -26,7 +26,7 @@ public class ReportController {
     public ResponseEntity<byte[]> exportHazards() throws IOException {
         byte[] file = reportService.exportHazards();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=hazards.xlsx")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=hazard-report.xlsx; filename*=UTF-8''隐患报表.xlsx")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(file);
     }
