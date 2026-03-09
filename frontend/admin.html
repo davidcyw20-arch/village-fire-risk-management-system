@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>管理员端</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./common.js?v=20260309"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">系统管理员端</div>
+    <nav class="menu">
+      <a class="active" href="#">管理驾驶舱</a>
+      <a href="./map.html?from=admin">风险地图</a>
+      <a href="./login.html">返回登录</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="title">系统管理驾驶舱</div>
+        <div class="sub">系统配置、用户管理、隐患督办、风险模型、知识管理、分析报表、日志审计</div>
+      </div>
+      <button class="danger" onclick="clearToken();location.href='./login.html'">退出</button>
+    </div>
+
+    <section class="cards">
+      <div class="card"><h4>全量隐患</h4><div id="a1" class="metric">-</div></div>
+      <div class="card"><h4>待分派/处理中</h4><div id="a2" class="metric">-</div></div>
+      <div class="card"><h4>已解决</h4><div id="a3" class="metric">-</div></div>
+      <div class="card"><h4>高风险区域数</h4><div id="a4" class="metric">-</div></div>
+    </section>
+
+    <section class="panel">
+      <h3>① 系统配置管理</h3>
+      <div class="toolbar">
+        <input id="cfgApiBase" placeholder="系统API地址" style="min-width:280px" />
+        <input id="cfgDefaultArea" placeholder="默认辖区编码（如A001）" />
+        <select id="cfgRolePolicy">
+          <option value="STRICT">权限分配策略：严格</option>
+          <option value="RELAXED">权限分配策略：宽松</option>
+        </select>
+        <button onclick="saveSystemConfig()">保存配置</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <input id="dictType" placeholder="数据字典类型（如：隐患类型）" />
+        <input id="dictValue" placeholder="数据字典值（如：飞线充电）" style="flex:1" />
+        <button class="ghost" onclick="addDictItem()">新增字典项</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>字典类型</th><th>字典值</th><th>操作</th></tr></thead>
+          <tbody id="tbodyDict"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>② 用户综合管理（居民/网格员）</h3>
+      <div class="toolbar">
+        <input id="userKeyword" placeholder="搜索用户（用户名/角色）" oninput="renderUsers()" style="flex:1;min-width:220px" />
+        <input id="newUsername" placeholder="新增用户名" />
+        <input id="newFullName" placeholder="姓名" />
+        <input id="newUserPassword" placeholder="初始密码" value="123456" />
+        <select id="newUserRole">
+          <option value="RESIDENT">居民</option>
+          <option value="GRID">网格员</option>
+                  </select>
+        <input id="newUserArea" placeholder="辖区编码(如A001)" />
+        <button class="ghost" onclick="addManagedUser()">新增用户</button>
+        <button class="ghost" onclick="loadUsers()">刷新用户</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>ID</th><th>用户名</th><th>姓名</th><th>角色</th><th>辖区</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="tbodyUsers"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>③ 隐患流程监控（督办与重分配）</h3>
+      <div class="toolbar">
+        <input id="hazardId" placeholder="隐患编号" />
+        <input id="gridUserId" placeholder="网格员编号" />
+        <button onclick="assignHazard()">分派 / 重分配</button>
+        <button class="ghost" onclick="urgeHazard()">督办提醒</button>
+        <button class="ghost" onclick="loadHazards(true)">刷新隐患</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>编号</th><th>标题</th><th>类型</th><th>状态</th><th>区域</th><th>处理网格员</th><th>上报人</th></tr></thead>
+          <tbody id="tbodyHazards"></tbody>
+        </table>
+      </div>
+      <div class="pagebar">
+        <button class="ghost" onclick="changePage(-1)">上一页</button>
+        <span id="pageInfo"></span>
+        <button class="ghost" onclick="changePage(1)">下一页</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>④ 风险模型配置与预警管理</h3>
+      <div class="toolbar">
+        <input id="modelName" placeholder="模型名称" value="城中村消防风险量化模型V1" style="min-width:250px" />
+        <input id="wHazard" type="number" step="0.1" min="0" placeholder="隐患数量权重" value="0.5" />
+        <input id="wPending" type="number" step="0.1" min="0" placeholder="待处理权重" value="0.3" />
+        <input id="wCritical" type="number" step="0.1" min="0" placeholder="高风险权重" value="0.2" />
+        <input id="warningThreshold" type="number" min="1" placeholder="预警阈值" value="75" />
+        <button onclick="saveRiskModel()">保存模型参数</button>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <button class="ghost" onclick="loadRisk()">刷新风险数据</button>
+        <button class="ghost" onclick="runRiskWarning()">触发预警扫描</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>区域编码</th><th>风险分值</th><th>风险等级</th><th>预警状态</th></tr></thead>
+          <tbody id="tbodyRisk"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>⑤ 消防知识管理与推送规则</h3>
+      <div class="toolbar">
+        <input id="knowTitle" placeholder="知识标题" style="min-width:200px" />
+        <input id="knowCategory" placeholder="分类（如：ELECTRICAL）" style="min-width:180px" />
+        <select id="knowRole" onchange="loadKnowledge()">
+          <option value="RESIDENT">居民</option>
+          <option value="GRID">网格员</option>
+          <option value="ALL">全角色</option>
+        </select>
+        <select id="knowRisk" onchange="loadKnowledge()">
+          <option value="LOW">低风险</option>
+          <option value="MID">中风险</option>
+          <option value="HIGH">高风险</option>
+          <option value="CRITICAL">极高风险</option>
+          <option value="ALL">全部风险</option>
+        </select>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <input id="knowSource" placeholder="来源（可选）" style="min-width:180px" />
+        <input id="knowContent" placeholder="知识内容" style="flex:1;min-width:300px" />
+        <button onclick="createKnowledge()">新增知识</button>
+        <button class="ghost" onclick="loadKnowledge()">刷新知识</button><span class="badge">当前知识数：<b id="knowledgeCount">0</b></span>
+      </div>
+      <div class="toolbar" style="margin-top:8px">
+        <input id="pushRuleName" placeholder="推送规则名（如：高风险区域每日推送）" style="min-width:260px" />
+        <input id="pushRuleContent" placeholder="规则内容（可选）" style="min-width:280px" />
+        <select id="pushRuleEnabled"><option value="1">启用</option><option value="0">停用</option></select>
+        <button class="ghost" onclick="addPushRule()">新增推送规则</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>ID</th><th>知识标题</th><th>适用角色</th><th>风险级别</th><th>发布</th><th>操作</th></tr></thead>
+          <tbody id="tbodyKnowledge"></tbody>
+        </table>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>规则名称</th><th>规则内容</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="tbodyPushRules"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>⑥ 数据可视化与分析（驾驶舱）</h3>
+      <div class="toolbar">
+        <button class="ghost" onclick="refreshDashboard()">刷新驾驶舱</button>
+        <button onclick="exportExcel()">导出隐患报表</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>统计项</th><th>数值</th><th>说明</th></tr></thead>
+          <tbody id="tbodyDashboard"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>⑦ 系统日志审计</h3>
+      <div class="toolbar">
+        <input id="logKeyword" placeholder="搜索日志（模块/操作/详情）" oninput="renderAuditLogs()" style="flex:1;min-width:260px" />
+        <button class="ghost" onclick="clearAuditLogs()">清空本地审计日志</button>
+      </div>
+      <div class="table-wrap" style="margin-top:8px">
+        <table>
+          <thead><tr><th>时间</th><th>模块</th><th>操作</th><th>详情</th></tr></thead>
+          <tbody id="tbodyLogs"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const me = getCurrentUser();
+let allHazards = [];
+let riskData = [];
+let page = 1;
+const pageSize = 6;
+let knowledgeData = [];
+
+let auditLogs = [];
+
+function ensureAdminRole(){
+  if(me.role !== 'ADMIN'){
+    alert('当前账号不是管理员账号，无法进入管理员端');
+    location.href = './login.html';
+  }
+}
+
+function addAudit(module, operation, detail){
+  console.log(`[AUDIT] ${module} | ${operation} | ${detail}`);
+}
+
+async function saveSystemConfig(){
+  try{
+    const cfg = await apiFetch('/admin/system-config', {
+      method:'PUT',
+      body: JSON.stringify({
+        apiBase: cfgApiBase.value.trim(),
+        defaultArea: cfgDefaultArea.value.trim().toUpperCase(),
+        rolePolicy: cfgRolePolicy.value
+      })
+    });
+    cfgApiBase.value = cfg.apiBase || '';
+    cfgDefaultArea.value = cfg.defaultArea || 'A001';
+    cfgRolePolicy.value = cfg.rolePolicy || 'STRICT';
+    alert('系统配置已保存');
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function loadSystemConfig(){
+  try{
+    const cfg = await apiFetch('/admin/system-config');
+    cfgApiBase.value = cfg.apiBase || API_BASE;
+    cfgDefaultArea.value = cfg.defaultArea || 'A001';
+    cfgRolePolicy.value = cfg.rolePolicy || 'STRICT';
+  }catch(e){
+    cfgApiBase.value = API_BASE;
+    cfgDefaultArea.value = 'A001';
+    cfgRolePolicy.value = 'STRICT';
+  }
+}
+
+async function addDictItem(){
+  if(!dictType.value.trim() || !dictValue.value.trim()) return alert('请填写完整字典信息');
+  try{
+    await apiFetch('/admin/dict-items', {
+      method:'POST',
+      body: JSON.stringify({dictType: dictType.value.trim(), dictValue: dictValue.value.trim()})
+    });
+    dictType.value=''; dictValue.value='';
+    await renderDict();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function delDict(id){
+  try{
+    await apiFetch(`/admin/dict-items/${id}`, {method:'DELETE'});
+    await renderDict();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function renderDict(){
+  try{
+    const list = await apiFetch('/admin/dict-items');
+    tbodyDict.innerHTML = list.map(x=>`<tr><td>${x.dictType}</td><td>${x.dictValue}</td><td><button class='ghost' onclick='delDict(${x.id})'>删除</button></td></tr>`).join('');
+  }catch(e){ tbodyDict.innerHTML = ''; }
+}
+
+async function assignHazard(){
+  try{
+    await apiFetch(`/hazards/${hazardId.value}/assign`, {method:'POST', body: JSON.stringify({gridUserId:Number(gridUserId.value)})});
+    addAudit('隐患流程', '分派/重分配', `隐患${hazardId.value} -> 网格员${gridUserId.value}`);
+    alert('分派成功');
+    loadHazards();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function urgeHazard(){
+  if(!hazardId.value) return alert('请先输入隐患编号');
+  try{
+    await apiFetch(`/admin/hazards/${hazardId.value}/urge`, {method:'POST', body: JSON.stringify({})});
+    alert(`已对隐患 ${hazardId.value} 发起督办提醒`);
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function loadHazards(withNotify = false){
+  try{
+    allHazards = await apiFetch('/admin/hazards/monitor');
+    if(withNotify){
+      const noticeResult = await apiFetch('/admin/hazards/refresh-notify', {method:'POST', body: JSON.stringify({})});
+      alert(`已刷新 ${noticeResult.hazardCount || allHazards.length} 条隐患，并通知 ${noticeResult.notifiedGridCount || 0} 名网格员`);
+    }
+    renderHazards();
+    metrics();
+    renderDashboard();
+  }catch(e){ alert(e.message); }
+}
+
+function renderHazards(){
+  const p = paginate(allHazards, page, pageSize);
+  page = p.currentPage;
+  tbodyHazards.innerHTML = p.pageItems.map(x=>`<tr>
+    <td>${x.id}</td><td>${x.title}</td><td>${toHazardTypeLabel(x.hazardType)}</td>
+    <td>${toHazardStatusLabel(x.status)}</td><td>${x.areaCode || '-'}</td>
+    <td>${x.assignedTo ? (x.assignedTo.username || x.assignedTo.id) : '-'}</td>
+    <td>${x.reportedBy ? (x.reportedBy.username || x.reportedBy.id) : '-'}</td>
+  </tr>`).join('');
+  pageInfo.textContent = `第 ${p.currentPage}/${p.totalPages} 页，共 ${p.total} 条`;
+}
+function changePage(d){ page += d; renderHazards(); }
+
+async function saveRiskModel(){
+  try{
+    await apiFetch('/admin/risk-model', {
+      method:'PUT',
+      body: JSON.stringify({
+        modelName: modelName.value.trim(),
+        wHazard: Number(wHazard.value || 0),
+        wPending: Number(wPending.value || 0),
+        wCritical: Number(wCritical.value || 0),
+        warningThreshold: Number(warningThreshold.value || 75)
+      })
+    });
+    alert('风险模型参数已保存');
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function loadRiskModel(){
+  try{
+    const m = await apiFetch('/admin/risk-model');
+    if(m.modelName) modelName.value = m.modelName;
+    if(m.wHazard != null && m.wHazard !== '') wHazard.value = m.wHazard;
+    if(m.wPending != null && m.wPending !== '') wPending.value = m.wPending;
+    if(m.wCritical != null && m.wCritical !== '') wCritical.value = m.wCritical;
+    if(m.warningThreshold != null && m.warningThreshold !== '') warningThreshold.value = m.warningThreshold;
+  }catch(e){}
+}
+
+function warningTag(score){
+  const threshold = Number(warningThreshold.value || 75);
+  return score >= threshold ? '<span class="badge">已触发预警</span>' : '<span class="sub">未触发</span>';
+}
+
+async function loadRisk(){
+  try{
+    riskData = await apiFetch('/risk/areas');
+    tbodyRisk.innerHTML = riskData.map(r=>`<tr><td>${r.areaCode}</td><td>${r.riskScore}</td><td>${toRiskLevelLabel(r.riskLevel)}</td><td>${warningTag(Number(r.riskScore || 0))}</td></tr>`).join('');
+    metrics();
+    renderDashboard();
+  }catch(e){ alert(e.message); }
+}
+
+async function runRiskWarning(){
+  try{
+    const data = await apiFetch('/admin/risk-warnings/scan', {method:'POST', body: JSON.stringify({})});
+    const hit = data.hitAreas || [];
+    const threshold = data.warningThreshold || Number(warningThreshold.value || 75);
+    alert(hit.length ? `阈值${threshold}，预警触发区域：${hit.map(x=>x.areaCode).join('、')}` : `阈值${threshold}，当前无区域触发预警`);
+    renderAuditLogs();
+    loadRisk();
+  }catch(e){ alert(e.message); }
+}
+
+function metrics(){
+  a1.textContent = allHazards.length;
+  a2.textContent = allHazards.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED'||x.status==='IN_PROGRESS').length;
+  a3.textContent = allHazards.filter(x=>x.status==='RESOLVED').length;
+  a4.textContent = riskData.filter(r=>r.riskLevel==='HIGH'||r.riskLevel==='CRITICAL').length;
+}
+
+async function createKnowledge(){
+  const title = (knowTitle.value || '').trim();
+  const category = (knowCategory.value || '').trim();
+  const content = (knowContent.value || '').trim();
+  if(!title || !category || !content) return alert('请填写知识标题、分类和内容');
+  try{
+    await apiFetch('/admin/knowledge-articles', {
+      method:'POST',
+      body: JSON.stringify({
+        title,
+        category,
+        targetRole: knowRole.value,
+        targetRiskLevel: knowRisk.value,
+        content,
+        source: (knowSource.value || '').trim(),
+        published: true
+      })
+    });
+    knowTitle.value='';
+    knowCategory.value='';
+    knowSource.value='';
+    knowContent.value='';
+    await loadKnowledge();
+  }catch(e){ alert(e.message); }
+}
+
+async function toggleKnowledgePublished(id, publish){
+  const item = (knowledgeData || []).find(x => x.id === id);
+  if(!item) return;
+  try{
+    await apiFetch(`/admin/knowledge-articles/${id}`, {
+      method:'PUT',
+      body: JSON.stringify({
+        title: item.title,
+        category: item.category || 'GENERAL',
+        targetRole: item.targetRole,
+        targetRiskLevel: item.targetRiskLevel,
+        content: item.content || '',
+        source: item.source || '',
+        published: publish
+      })
+    });
+    await loadKnowledge();
+  }catch(e){ alert(e.message); }
+}
+
+async function loadKnowledge(){
+  try{
+    knowledgeData = await apiFetch('/admin/knowledge-articles');
+    const roleFilter = knowRole.value;
+    const riskFilter = knowRisk.value;
+    const filtered = (knowledgeData || []).filter(k => {
+      const roleOk = roleFilter === 'ALL' ? true : (k.targetRole === roleFilter || k.targetRole === 'ALL');
+      const riskOk = riskFilter === 'ALL' ? true : (k.targetRiskLevel === riskFilter || k.targetRiskLevel === 'ALL');
+      return roleOk && riskOk;
+    });
+    knowledgeCount.textContent = filtered.length;
+    tbodyKnowledge.innerHTML = filtered.map(k=>`<tr>
+      <td>${k.id}</td>
+      <td>${k.title || '-'}</td>
+      <td>${toRoleLabel(k.targetRole)}</td>
+      <td>${toRiskLevelLabel(k.targetRiskLevel)}</td>
+      <td>${k.published ? '是' : '否'}</td>
+      <td><button class='ghost' onclick='toggleKnowledgePublished(${k.id}, ${!k.published})'>${k.published ? '下架' : '发布'}</button></td>
+    </tr>`).join('');
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function addPushRule(){
+  if(!pushRuleName.value.trim()) return alert('请填写推送规则名');
+  try{
+    await apiFetch('/admin/push-rules', {
+      method:'POST',
+      body: JSON.stringify({name: pushRuleName.value.trim(), ruleContent: (pushRuleContent.value || '').trim(), enabled: pushRuleEnabled.value === '1'})
+    });
+    pushRuleName.value = '';
+    pushRuleContent.value = '';
+    await renderPushRules();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function togglePushRule(id, enabled){
+  try{
+    await apiFetch(`/admin/push-rules/${id}/enabled`, {method:'PATCH', body: JSON.stringify({enabled: !enabled})});
+    await renderPushRules();
+    renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function renderPushRules(){
+  try{
+    const list = await apiFetch('/admin/push-rules');
+    tbodyPushRules.innerHTML = list.map(x=>`<tr><td>${x.name}</td><td>${x.ruleContent || '-'}</td><td>${x.enabled?'已启用':'已停用'}</td><td><button class='ghost' onclick='togglePushRule(${x.id}, ${x.enabled})'>切换状态</button></td></tr>`).join('');
+  }catch(e){ tbodyPushRules.innerHTML = ''; }
+}
+
+async function loadUsers(){
+  try{
+    const users = await apiFetch('/admin/users');
+    window.adminUsers = users || [];
+    renderUsers();
+  }catch(e){ alert(e.message); }
+}
+
+async function addManagedUser(){
+  const username = newUsername.value.trim();
+  const fullName = newFullName.value.trim() || username;
+  const password = newUserPassword.value.trim();
+  if(!username || !password) return alert('请输入用户名和初始密码');
+  try{
+    await apiFetch('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        username,
+        fullName,
+        password,
+        role: newUserRole.value,
+        areaCode: (newUserArea.value || '').trim().toUpperCase()
+      })
+    });
+    addAudit('用户管理', '新增用户', `${username}(${newUserRole.value})`);
+    newUsername.value = '';
+    newFullName.value = '';
+    newUserArea.value = '';
+    renderAuditLogs();
+    loadUsers();
+  }catch(e){ alert(e.message); }
+}
+
+async function setUserStatus(userId, enabled){
+  try{
+    await apiFetch(`/admin/users/${userId}/enabled`, {
+      method: 'PATCH',
+      body: JSON.stringify({enabled})
+    });
+    addAudit('用户管理', enabled ? '启用账户' : '停用账户', `userId=${userId}`);
+    renderAuditLogs();
+    loadUsers();
+  }catch(e){ alert(e.message); }
+}
+
+function renderUsers(){
+  const keyword = (userKeyword.value || '').trim().toLowerCase();
+  const users = window.adminUsers || [];
+  const list = users.filter(x => !keyword ||
+    String(x.username || '').toLowerCase().includes(keyword) ||
+    String(x.role || '').toLowerCase().includes(keyword)
+  );
+  tbodyUsers.innerHTML = list.map(x=>`<tr>
+    <td>${x.id}</td><td>${x.username}</td><td>${x.fullName || '-'}</td><td>${x.role}</td><td>${x.areaCode || '-'}</td>
+    <td>${x.enabled ? '已启用' : '已停用'}</td>
+    <td>
+      <button class='ghost' onclick='setUserStatus(${x.id}, true)'>启用</button>
+      <button class='ghost' onclick='setUserStatus(${x.id}, false)'>停用</button>
+    </td>
+  </tr>`).join('');
+}
+
+function renderDashboard(){
+  const pending = allHazards.filter(x=>x.status==='REPORTED'||x.status==='ASSIGNED'||x.status==='IN_PROGRESS').length;
+  const resolved = allHazards.filter(x=>x.status==='RESOLVED').length;
+  const efficiency = allHazards.length ? ((resolved / allHazards.length) * 100).toFixed(1) + '%' : '0%';
+  const criticalArea = riskData.filter(x=>x.riskLevel==='CRITICAL').length;
+  const highArea = riskData.filter(x=>x.riskLevel==='HIGH').length;
+  const avgRisk = riskData.length ? (riskData.reduce((s, x)=>s + Number(x.riskScore || 0), 0) / riskData.length).toFixed(1) : '0.0';
+  const rows = [
+    ['隐患总量', allHazards.length, '系统内全部隐患记录数'],
+    ['待处理隐患', pending, '待分派 + 已分派 + 处理中'],
+    ['办结率', efficiency, '已解决隐患占比'],
+    ['高风险区域', highArea, '风险等级为HIGH的区域数'],
+    ['极高风险区域', criticalArea, '风险等级为CRITICAL的区域数'],
+    ['区域平均风险分', avgRisk, '所有区域风险分值的平均值']
+  ];
+  tbodyDashboard.innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+}
+
+async function refreshDashboard(){
+  try{
+    const [hazards, risks] = await Promise.all([
+      apiFetch('/admin/hazards/monitor'),
+      apiFetch('/risk/areas')
+    ]);
+    allHazards = hazards || [];
+    riskData = risks || [];
+    metrics();
+    renderDashboard();
+    alert('驾驶舱数据已更新');
+  }catch(e){ alert('刷新驾驶舱失败：' + e.message); }
+}
+
+async function exportExcel(){
+  try{
+    const resp = await fetch(`${API_BASE}/reports/hazards/export`, {headers:{Authorization:'Bearer '+getToken()}});
+    if(!resp.ok){ alert('导出失败'); return; }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '隐患报表.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+    addAudit('数据分析', '导出报表', '导出隐患报表.xlsx');
+    renderAuditLogs();
+  }catch(e){ alert(`导出失败：${e.message}`); }
+}
+
+async function clearAuditLogs(){
+  if(!confirm('确认清空系统审计日志？')) return;
+  try{
+    await apiFetch('/admin/audit-logs', {method:'DELETE'});
+    await renderAuditLogs();
+  }catch(e){ alert(e.message); }
+}
+
+async function renderAuditLogs(){
+  try{
+    const keyword = (logKeyword.value || '').trim();
+    auditLogs = await apiFetch(`/admin/audit-logs${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ''}`);
+    tbodyLogs.innerHTML = auditLogs.map(x=>`<tr><td>${(x.createdAt || '').replace('T',' ').slice(0,19)}</td><td>${x.module || '-'}</td><td>${x.operation || '-'}</td><td>${x.requestParams || '-'}</td></tr>`).join('');
+  }catch(e){ tbodyLogs.innerHTML = ''; }
+}
+
+ensureAdminRole();
+loadSystemConfig();
+renderDict();
+renderPushRules();
+loadUsers();
+renderAuditLogs();
+loadHazards();
+loadRisk();
+loadRiskModel();
+loadKnowledge();
+renderDashboard();
+</script>
+</body>
+</html>

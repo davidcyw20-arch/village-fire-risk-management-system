@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>登录</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./common.js?v=20260309"></script>
+</head>
+<body class="login-page">
+  <div class="login-shell alt">
+    <section class="login-right-card">
+      <div class="login-logo">FR</div>
+      <div class="login-intro">
+        <p class="intro-en">城中村消防风险管理系统</p>
+        <h1>消防风险协同治理平台</h1>
+        <p>隐患闭环 · 风险研判 · 地图联动 · 预警通知</p>
+        <p>让基层消防治理更智能、更敏捷、更透明</p>
+      </div>
+
+
+      <p class="form-caption">欢迎登录系统</p>
+
+      <label>* 用户名</label>
+      <input id="loginUsername" placeholder="请输入用户名" />
+
+      <label>* 密码</label>
+      <input id="loginPassword" type="password" placeholder="请输入密码" />
+
+      <div class="remember-row">
+        <label><input type="checkbox" checked /> 保持登录</label>
+        <a class="link" href="#" onclick="fillDemo(event)">使用演示账号</a>
+      </div>
+
+      <button class="login-btn" onclick="login()">登录</button>
+
+      <div class="login-extra">
+        <p><b>登录说明</b>：系统会根据账号角色自动进入居民端、网格端或管理员端。</p>
+        <ul>
+          <li>居民账号可自行注册</li>
+          <li>网格员/管理员账号由系统管理员分配</li>
+        </ul>
+      </div>
+
+      <p class="auth-footer">没有账号？<a class="link" href="./register.html">点击这里注册居民账号</a></p>
+    </section>
+  </div>
+
+<script>
+function fillDemo(e){
+  e.preventDefault();
+  loginUsername.value='admin';
+  loginPassword.value='Password@123';
+}
+
+async function login(){
+  try{
+    const data=await apiFetch('/auth/login',{method:'POST',body:JSON.stringify({username:loginUsername.value,password:loginPassword.value})});
+    setToken(data.token);
+    setLoginRole(data.role);
+    localStorage.setItem('loginUsername', data.username || loginUsername.value);
+    const roleText={ADMIN:'系统管理员',GRID:'网格员',RESIDENT:'居民用户'}[data.role]||data.role;
+    alert('登录成功：'+roleText);
+    if(data.role==='ADMIN') location.href='./admin.html';
+    else if(data.role==='GRID') location.href='./grid.html';
+    else location.href='./resident.html';
+  }catch(e){alert(e.message)}
+}
+</script>
+</body>
+</html>
