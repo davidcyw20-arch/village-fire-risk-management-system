@@ -106,11 +106,20 @@ const RISK_LEVEL_LABELS = {
   MID: '中风险',
   HIGH: '高风险',
   CRITICAL: '极高风险',
+  ALL: '全部风险',
+};
+
+const ROLE_LABELS = {
+  RESIDENT: '居民',
+  GRID: '网格员',
+  ADMIN: '管理员',
+  ALL: '全角色',
 };
 
 function toHazardTypeLabel(v){ return HAZARD_TYPE_LABELS[v] || v || '-'; }
 function toHazardStatusLabel(v){ return HAZARD_STATUS_LABELS[v] || v || '-'; }
 function toRiskLevelLabel(v){ return RISK_LEVEL_LABELS[v] || v || '-'; }
+function toRoleLabel(v){ return ROLE_LABELS[v] || v || '-'; }
 
 
 function parseJwtPayload(token) {

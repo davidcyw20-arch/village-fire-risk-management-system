@@ -129,12 +129,12 @@
       <div class="toolbar">
         <input id="knowTitle" placeholder="知识标题" style="min-width:200px" />
         <input id="knowCategory" placeholder="分类（如：ELECTRICAL）" style="min-width:180px" />
-        <select id="knowRole">
+        <select id="knowRole" onchange="loadKnowledge()">
           <option value="RESIDENT">居民</option>
           <option value="GRID">网格员</option>
           <option value="ALL">全角色</option>
         </select>
-        <select id="knowRisk">
+        <select id="knowRisk" onchange="loadKnowledge()">
           <option value="LOW">低风险</option>
           <option value="MID">中风险</option>
           <option value="HIGH">高风险</option>
@@ -146,10 +146,11 @@
         <input id="knowSource" placeholder="来源（可选）" style="min-width:180px" />
         <input id="knowContent" placeholder="知识内容" style="flex:1;min-width:300px" />
         <button onclick="createKnowledge()">新增知识</button>
-        <button class="ghost" onclick="loadKnowledge()">刷新知识</button>
+        <button class="ghost" onclick="loadKnowledge()">刷新知识</button><span class="badge">当前知识数：<b id="knowledgeCount">0</b></span>
       </div>
       <div class="toolbar" style="margin-top:8px">
         <input id="pushRuleName" placeholder="推送规则名（如：高风险区域每日推送）" style="min-width:260px" />
+        <input id="pushRuleContent" placeholder="规则内容（可选）" style="min-width:280px" />
         <select id="pushRuleEnabled"><option value="1">启用</option><option value="0">停用</option></select>
         <button class="ghost" onclick="addPushRule()">新增推送规则</button>
       </div>
@@ -161,7 +162,7 @@
       </div>
       <div class="table-wrap" style="margin-top:8px">
         <table>
-          <thead><tr><th>规则名称</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>规则名称</th><th>规则内容</th><th>状态</th><th>操作</th></tr></thead>
           <tbody id="tbodyPushRules"></tbody>
         </table>
       </div>
@@ -431,11 +432,19 @@ async function toggleKnowledgePublished(id, publish){
 async function loadKnowledge(){
   try{
     knowledgeData = await apiFetch('/admin/knowledge-articles');
-    tbodyKnowledge.innerHTML = knowledgeData.map(k=>`<tr>
+    const roleFilter = knowRole.value;
+    const riskFilter = knowRisk.value;
+    const filtered = (knowledgeData || []).filter(k => {
+      const roleOk = roleFilter === 'ALL' ? true : (k.targetRole === roleFilter || k.targetRole === 'ALL');
+      const riskOk = riskFilter === 'ALL' ? true : (k.targetRiskLevel === riskFilter || k.targetRiskLevel === 'ALL');
+      return roleOk && riskOk;
+    });
+    knowledgeCount.textContent = filtered.length;
+    tbodyKnowledge.innerHTML = filtered.map(k=>`<tr>
       <td>${k.id}</td>
       <td>${k.title || '-'}</td>
-      <td>${k.targetRole || '-'}</td>
-      <td>${k.targetRiskLevel || '-'}</td>
+      <td>${toRoleLabel(k.targetRole)}</td>
+      <td>${toRiskLevelLabel(k.targetRiskLevel)}</td>
       <td>${k.published ? '是' : '否'}</td>
       <td><button class='ghost' onclick='toggleKnowledgePublished(${k.id}, ${!k.published})'>${k.published ? '下架' : '发布'}</button></td>
     </tr>`).join('');
@@ -448,9 +457,10 @@ async function addPushRule(){
   try{
     await apiFetch('/admin/push-rules', {
       method:'POST',
-      body: JSON.stringify({name: pushRuleName.value.trim(), enabled: pushRuleEnabled.value === '1'})
+      body: JSON.stringify({name: pushRuleName.value.trim(), ruleContent: (pushRuleContent.value || '').trim(), enabled: pushRuleEnabled.value === '1'})
     });
     pushRuleName.value = '';
+    pushRuleContent.value = '';
     await renderPushRules();
     renderAuditLogs();
   }catch(e){ alert(e.message); }
@@ -467,7 +477,7 @@ async function togglePushRule(id, enabled){
 async function renderPushRules(){
   try{
     const list = await apiFetch('/admin/push-rules');
-    tbodyPushRules.innerHTML = list.map(x=>`<tr><td>${x.name}</td><td>${x.enabled?'启用':'停用'}</td><td><button class='ghost' onclick='togglePushRule(${x.id}, ${x.enabled})'>切换状态</button></td></tr>`).join('');
+    tbodyPushRules.innerHTML = list.map(x=>`<tr><td>${x.name}</td><td>${x.ruleContent || '-'}</td><td>${x.enabled?'已启用':'已停用'}</td><td><button class='ghost' onclick='togglePushRule(${x.id}, ${x.enabled})'>切换状态</button></td></tr>`).join('');
   }catch(e){ tbodyPushRules.innerHTML = ''; }
 }
 
